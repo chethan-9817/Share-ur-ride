@@ -8,7 +8,6 @@ Uses SQLite for MVP; swap to PostgreSQL by changing DATABASE_URL in .env.
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from .config import settings
-
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
 # SQLite needs check_same_thread=False for FastAPI's async workers.
