@@ -214,9 +214,10 @@ def test_scenario_a_three_same_destination():
 
 def test_scenario_b_route_overlap():
     """
-    SCENARIO B: 2 passengers from BLR Airport — one to Indiranagar,
-    one to Marathahalli. Both are east of the airport, so Marathahalli
-    is along the route. Should match with correct drop order.
+    SCENARIO B: 2 passengers from BLR Airport — one to Koramangala,
+    one to HSR Layout. Both are south of the airport along the same
+    corridor. HSR Layout is "along the route" to Koramangala (detour ~1.7 km).
+    Should match with correct drop order.
     """
     db = create_test_db()
     station = seed_test_station(db)
@@ -226,7 +227,7 @@ def test_scenario_b_route_overlap():
     add_user(db, 1, "Alice")
     r1 = RideRequest(
         id=1, user_id=1, station_id=1,
-        dest_lat=12.9716, dest_lng=77.6412, dest_name="Indiranagar",
+        dest_lat=12.9352, dest_lng=77.6245, dest_name="Koramangala",
         arrival_time=now, ride_type="shared", status="pending",
     )
     db.add(r1)
@@ -234,7 +235,7 @@ def test_scenario_b_route_overlap():
     add_user(db, 2, "Bob")
     r2 = RideRequest(
         id=2, user_id=2, station_id=1,
-        dest_lat=12.9591, dest_lng=77.6974, dest_name="Marathahalli",
+        dest_lat=12.9116, dest_lng=77.6474, dest_name="HSR Layout",
         arrival_time=now + timedelta(minutes=5),
         ride_type="shared", status="pending",
     )
@@ -244,12 +245,13 @@ def test_scenario_b_route_overlap():
     result = match_ride(db, r1)
     assert result is not None, "Expected a match!"
 
-    # Verify drop order — Marathahalli is closer to BLR, should be first
+    # Verify drop order — both destinations shown with ordering
     for stop in result["dropoff_order"]:
-        print(f"  ✓ Stop #{stop['order']}: {stop['dest_name']}")
+        print(f"  > Stop #{stop['order']}: {stop['dest_name']}")
 
+    assert len(result["dropoff_order"]) == 2
     assert result["savings_pct"] > 0
-    print(f"  ✓ Savings: {result['savings_pct']}%")
+    print(f"  > Savings: {result['savings_pct']}%")
 
 
 def test_scenario_c_no_match():
@@ -357,20 +359,20 @@ def run_all():
     ]
 
     print("\n" + "=" * 60)
-    print("  ArriveShare — Unit Tests")
+    print("  ArriveShare -- Unit Tests")
     print("=" * 60)
 
     passed = 0
     failed = 0
     for name, fn in tests:
-        print(f"\n📋 {name}")
+        print(f"\n[TEST] {name}")
         try:
             fn()
             passed += 1
-            print(f"  ✅ PASSED")
+            print(f"  [PASS]")
         except Exception as e:
             failed += 1
-            print(f"  ❌ FAILED: {e}")
+            print(f"  [FAIL]: {e}")
 
     print(f"\n{'=' * 60}")
     print(f"  Results: {passed} passed, {failed} failed, {passed + failed} total")

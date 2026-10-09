@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+/* ── ArriveShare Design System ─────────────────────────────── */
+
+@theme {
+  --color-primary: #6C5CE7;
+  --color-primary-light: #A29BFE;
+  --color-primary-dark: #4834D4;
+  --color-accent: #00D2D3;
+  --color-accent-light: #48DBFB;
+  --color-success: #00B894;
+  --color-warning: #FDCB6E;
+  --color-danger: #E17055;
+  --color-bg-dark: #0F0F1A;
+  --color-bg-card: #1A1A2E;
+  --color-bg-card-hover: #222240;
+  --color-bg-surface: #16213E;
+  --color-text-primary: #F8F8FF;
+  --color-text-secondary: #B0B0CC;
+  --color-text-muted: #6C6C8A;
+  --color-border: #2A2A4A;
+  --color-glass: rgba(255, 255, 255, 0.06);
+  --font-sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Base Styles ───────────────────────────────────────────── */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-bg-dark);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Leaflet Map Overrides ─────────────────────────────────── */
+
+.leaflet-container {
+  background: var(--color-bg-surface) !important;
+  border-radius: 16px;
+  z-index: 1;
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--color-bg-card) !important;
+  color: var(--color-text-primary) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--color-bg-card) !important;
+}
+
+/* ── Glassmorphism ─────────────────────────────────────────── */
+
+.glass {
+  background: var(--color-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ── Animations ────────────────────────────────────────────── */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.08) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* staggered children */
+.stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger > *:nth-child(5) { animation-delay: 0.25s; }
+
+/* ── Custom Scrollbar ──────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ── Status Badge Colors ───────────────────────────────────── */
+
+.status-pending {
+  background: rgba(253, 203, 110, 0.15);
+  color: #FDCB6E;
+}
+.status-matched {
+  background: rgba(108, 92, 231, 0.15);
+  color: #A29BFE;
+}
+.status-confirmed {
+  background: rgba(0, 184, 148, 0.15);
+  color: #00B894;
+}
+.status-on_trip {
+  background: rgba(0, 210, 211, 0.15);
+  color: #00D2D3;
+}
+.status-completed {
+  background: rgba(0, 184, 148, 0.2);
+  color: #00B894;
+}
