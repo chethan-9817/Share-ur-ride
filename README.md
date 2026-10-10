@@ -58,6 +58,7 @@ ArriveShare is an end-to-end intelligent ride-pooling platform designed specific
 - 💰 **Mathematical Fair-Share Pricing:** Single base fare split with per-kilometer charges calculated per rider based on relative distance traveled.
 - 🔒 **Privacy & Safety First:** Anonymized co-traveler identities (first name + verified badge), drop-off sequencing preview, and emergency trip link sharing.
 - 🚕 **Driver Operations Dashboard:** Real-time driver portal with active vehicle status, ordered pickup and drop-off queues, passenger counts, and trip lifecycle controls.
+- ⚡ **Interactive Glassmorphic Interface:** Dark-mode UI styled with modern CSS design tokens, interactive Leaflet CartoDB dark maps, animated radar matching screen, and single-click demo logins.
 
 
 
