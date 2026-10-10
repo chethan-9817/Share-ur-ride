@@ -11,8 +11,25 @@ export default function LoginPage() {
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [otpHint, setOtpHint] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
   const { login, demoLogin, demoDriverLogin } = useAuth();
   const navigate = useNavigate();
+
+  const isDemoEmail = email.toLowerCase().endsWith('@arriveshare.test');
+
+  const startResendTimer = () => {
+    setResendCooldown(30);
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -20,7 +37,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await authApi.register({ name, email, phone, role: 'passenger' });
-      await authApi.sendOtp(email);
+      const res = await authApi.sendOtp(email);
+      setOtpHint(res.hint || '');
+      startResendTimer();
       setMode('otp');
     } catch (err) {
       setError(err.message);
@@ -34,8 +53,25 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await authApi.sendOtp(email);
+      const res = await authApi.sendOtp(email);
+      setOtpHint(res.hint || '');
+      startResendTimer();
       setMode('otp');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0 || loading) return;
+    setError('');
+    setLoading(true);
+    try {
+      const res = await authApi.sendOtp(email);
+      setOtpHint(res.hint || '');
+      startResendTimer();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -48,7 +84,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const user = await login(email, otp);
+      const user = await login(email, otp.trim());
       navigate(user.role === 'driver' ? '/driver' : '/');
     } catch (err) {
       setError(err.message);
