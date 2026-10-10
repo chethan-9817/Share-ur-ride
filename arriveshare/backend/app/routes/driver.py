@@ -12,6 +12,7 @@ from ..database import get_db
 from ..models import Driver, RideGroup, User
 from ..auth import get_current_user
 from ..schemas import DriverResponse, GroupResponse, RideStatusUpdate
+from ..services.routing import get_osrm_distance
 
 router = APIRouter(prefix="/api/driver", tags=["driver"])
 
@@ -48,14 +49,14 @@ def list_assignments(
 
 
 @router.get("/assignments/{group_id}")
-def get_assignment_detail(
+async def get_assignment_detail(
     group_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
     Get detailed assignment info for a group:
-    ordered stops, passenger names, total earnings.
+    ordered stops, passenger names, total earnings, and road geometry.
     """
     driver = db.query(Driver).filter(Driver.user_id == current_user.id).first()
     if not driver:
@@ -93,13 +94,18 @@ def get_assignment_detail(
             "passenger_verified": req.user.verified if req.user else False,
         })
 
+    # Fetch real road geometry from OSRM (or fallback)
+    coords = [(s["lat"], s["lng"]) for s in stops]
+    road_distance, geometry = await get_osrm_distance(coords)
+
     return {
         "group_id": group.id,
         "status": group.status,
-        "total_distance_km": group.total_distance_km,
+        "total_distance_km": group.total_distance_km or round(road_distance, 2),
         "total_earnings": group.total_fare,
         "passenger_count": len(group.ride_requests),
         "stops": stops,
+        "geometry": geometry,
         "vehicle": {
             "number": driver.vehicle_number,
             "model": driver.vehicle_model,
@@ -143,3 +149,19 @@ def update_assignment_status(
 
     db.commit()
     return {"status": group.status, "message": f"Group {group_id} updated to {data.status}"}
+
+
+@router.post("/toggle-availability", response_model=DriverResponse)
+def toggle_availability(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Toggle driver available status between True and False."""
+    driver = db.query(Driver).filter(Driver.user_id == current_user.id).first()
+    if not driver:
+        raise HTTPException(status_code=404, detail="Driver profile not found")
+
+    driver.available = not driver.available
+    db.commit()
+    db.refresh(driver)
+    return driver

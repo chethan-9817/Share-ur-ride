@@ -46,6 +46,7 @@ export const rides = {
   my: () => request('/rides/my'),
   get: (id) => request(`/rides/${id}`),
   confirm: (id) => request(`/rides/${id}/confirm`, { method: 'POST' }),
+  cancel: (id) => request(`/rides/${id}/cancel`, { method: 'POST' }),
   updateStatus: (id, status) => request(`/rides/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   shareTrip: (id, data) => request(`/rides/${id}/share-trip`, { method: 'POST', body: JSON.stringify(data) }),
 };
@@ -68,4 +69,5 @@ export const driver = {
   assignments: () => request('/driver/assignments'),
   assignment: (groupId) => request(`/driver/assignments/${groupId}`),
   updateStatus: (groupId, status) => request(`/driver/assignments/${groupId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  toggleAvailability: () => request('/driver/toggle-availability', { method: 'POST' }),
 };

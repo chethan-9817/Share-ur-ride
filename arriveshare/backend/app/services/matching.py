@@ -221,7 +221,7 @@ def match_ride(
 
             # Recompute route and fares for the whole group
             all_dests = current_dests + [new_dest]
-            return _finalize_group(db, group, all_dests, station)
+            return _finalize_group(db, group, all_dests, station, requesting_ride_id=ride.id)
 
     # ── No existing group fits → try to create a new one ──────────
     candidates = find_candidates(db, ride)
@@ -286,14 +286,15 @@ def match_ride(
         db.commit()
         return None
 
-    return _finalize_group(db, group, group_dests, station)
+    return _finalize_group(db, group, group_dests, station, requesting_ride_id=ride.id)
 
 
 def _finalize_group(
     db: Session,
     group: RideGroup,
     destinations: List[Dict],
-    station: Station
+    station: Station,
+    requesting_ride_id: Optional[int] = None,
 ) -> Dict:
     """
     After forming a group, optimize the route, calculate fares,
@@ -348,15 +349,17 @@ def _finalize_group(
 
     db.commit()
 
-    # Build response
-    requesting_ride = db.query(RideRequest).get(ordered[0]["ride_request_id"])
+    # Build response: specific fare for the requesting passenger
+    target_id = requesting_ride_id or ordered[0]["ride_request_id"]
     fare_info = next(
-        (f for f in fare_splits if f["ride_request_id"] == ordered[0]["ride_request_id"]),
+        (f for f in fare_splits if f["ride_request_id"] == target_id),
         fare_splits[0]
     )
 
     co_travelers = []
     for dest in ordered:
+        if requesting_ride_id and dest["ride_request_id"] == requesting_ride_id:
+            continue
         rr = db.query(RideRequest).get(dest["ride_request_id"])
         if rr and rr.user:
             co_travelers.append({

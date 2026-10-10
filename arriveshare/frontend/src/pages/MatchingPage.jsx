@@ -101,6 +101,25 @@ export default function MatchingPage() {
     }
   };
 
+  const handleRetryMatching = () => {
+    setPhase('searching');
+    setError('');
+    setTimeout(async () => {
+      try {
+        const result = await matchApi.find(rideId);
+        setMatchResult(result);
+        setPhase('found');
+      } catch (err) {
+        if (err.message.includes('No matches found') || err.message.includes('404')) {
+          setPhase('not_found');
+        } else {
+          setError(err.message);
+          setPhase('error');
+        }
+      }
+    }, 1500);
+  };
+
   // ── Searching animation ──
 
   if (phase === 'searching') {
@@ -301,9 +320,16 @@ export default function MatchingPage() {
 
           <div className="space-y-3 animate-fade-in-up" style={{ animationDelay: '0.15s' }}>
             <button
+              onClick={handleRetryMatching}
+              disabled={actionLoading}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-accent to-cyan-600 text-white font-semibold text-lg hover:shadow-xl hover:shadow-accent/25 transition-all active:scale-[0.98] disabled:opacity-50"
+            >
+              🔄 Try Matching Again
+            </button>
+            <button
               onClick={handleBookSolo}
               disabled={actionLoading}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-primary-dark text-white font-semibold text-lg hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-primary to-primary-dark text-white font-semibold hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {actionLoading ? 'Booking...' : 'Book Solo Ride'}
             </button>

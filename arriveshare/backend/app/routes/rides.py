@@ -169,3 +169,70 @@ def share_trip(
     db.commit()
     db.refresh(trip_share)
     return trip_share
+
+
+@router.post("/{ride_id}/cancel", response_model=RideRequestResponse)
+def cancel_ride(
+    ride_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Cancel a ride request.
+    If part of a group, recalculates the route and fares for remaining riders,
+    or dissolves the group if fewer than 2 passengers remain.
+    """
+    ride = db.query(RideRequest).filter(
+        RideRequest.id == ride_id,
+        RideRequest.user_id == current_user.id,
+    ).first()
+    if not ride:
+        raise HTTPException(status_code=404, detail="Ride not found")
+
+    if ride.status in ("completed", "cancelled"):
+        raise HTTPException(status_code=400, detail=f"Ride is already {ride.status}")
+
+    old_group_id = ride.group_id
+    ride.status = "cancelled"
+    ride.group_id = None
+    ride.shared_fare = None
+    ride.savings_pct = None
+    ride.drop_order = None
+
+    if old_group_id:
+        from ..models import RideGroup, Station
+        from ..services.matching import _finalize_group
+
+        group = db.query(RideGroup).get(old_group_id)
+        if group:
+            remaining = [
+                r for r in group.ride_requests
+                if r.id != ride.id and r.status != "cancelled"
+            ]
+            if len(remaining) < 2:
+                # Group not viable without this rider, dissolve
+                for r in remaining:
+                    r.group_id = None
+                    r.status = "pending"
+                    r.shared_fare = None
+                    r.savings_pct = None
+                    r.drop_order = None
+                if group.driver:
+                    group.driver.available = True
+                db.delete(group)
+            else:
+                station = db.query(Station).get(group.station_id)
+                dests = [
+                    {
+                        "ride_request_id": r.id,
+                        "dest_lat": r.dest_lat,
+                        "dest_lng": r.dest_lng,
+                        "dest_name": r.dest_name,
+                    }
+                    for r in remaining
+                ]
+                _finalize_group(db, group, dests, station)
+
+    db.commit()
+    db.refresh(ride)
+    return ride

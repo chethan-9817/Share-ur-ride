@@ -15,11 +15,23 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const fetchRides = () => {
+    ridesApi.my().then(setMyRides).catch(() => {});
+  };
+
   useEffect(() => {
     Promise.all([stationsApi.list(), ridesApi.my()])
       .then(([s, r]) => { setStationList(s); setMyRides(r); })
       .finally(() => setLoading(false));
+
+    // Poll for live ride updates every 5 seconds
+    const interval = setInterval(fetchRides, 5000);
+    return () => clearInterval(interval);
   }, []);
+
+  const totalSaved = myRides
+    .filter((r) => r.shared_fare && r.solo_fare && r.status !== 'cancelled')
+    .reduce((sum, r) => sum + (r.solo_fare - r.shared_fare), 0);
 
   const statusColors = {
     pending: 'status-pending',
@@ -27,6 +39,7 @@ export default function HomePage() {
     confirmed: 'status-confirmed',
     on_trip: 'status-on_trip',
     completed: 'status-completed',
+    cancelled: 'bg-danger/15 text-danger',
   };
 
   if (loading) {
@@ -75,6 +88,20 @@ export default function HomePage() {
             + Book a Ride
           </button>
         </div>
+
+        {/* Stats Pill Card */}
+        {myRides.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 mb-6 animate-fade-in-up">
+            <div className="glass rounded-2xl p-4 text-center">
+              <p className="text-2xl font-bold text-success">{'\u20B9'}{totalSaved.toFixed(0)}</p>
+              <p className="text-text-muted text-xs mt-1">Total Money Saved</p>
+            </div>
+            <div className="glass rounded-2xl p-4 text-center">
+              <p className="text-2xl font-bold text-accent">{myRides.length}</p>
+              <p className="text-text-muted text-xs mt-1">Total Trips</p>
+            </div>
+          </div>
+        )}
 
         {/* Select Station */}
         <h3 className="text-text-muted text-xs uppercase tracking-wider font-semibold mb-3">Stations</h3>

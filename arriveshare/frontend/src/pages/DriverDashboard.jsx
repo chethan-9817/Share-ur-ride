@@ -41,12 +41,17 @@ export default function DriverDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [toggleLoading, setToggleLoading] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData(true);
+    const interval = setInterval(() => {
+      loadData(false);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [selectedGroup]);
 
-  const loadData = async () => {
+  const loadData = async (initial = false) => {
     try {
       const [prof, groups] = await Promise.all([
         driverApi.profile(),
@@ -56,11 +61,14 @@ export default function DriverDashboard() {
       setAssignments(groups);
       if (groups.length > 0 && !selectedGroup) {
         loadGroupDetail(groups[0].id);
+      } else if (selectedGroup) {
+        const detail = await driverApi.assignment(selectedGroup);
+        setGroupDetail(detail);
       }
     } catch (err) {
-      setError(err.message);
+      if (initial) setError(err.message);
     } finally {
-      setLoading(false);
+      if (initial) setLoading(false);
     }
   };
 
@@ -71,6 +79,18 @@ export default function DriverDashboard() {
       setGroupDetail(detail);
     } catch (err) {
       setError(err.message);
+    }
+  };
+
+  const handleToggleAvailability = async () => {
+    setToggleLoading(true);
+    try {
+      const updated = await driverApi.toggleAvailability();
+      setProfile(updated);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setToggleLoading(false);
     }
   };
 
@@ -162,15 +182,29 @@ export default function DriverDashboard() {
         {/* Vehicle info */}
         {profile && (
           <div className="glass rounded-3xl p-5 animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
-            <h3 className="text-text-muted text-xs uppercase tracking-wider font-semibold mb-3">Your Vehicle</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-text-muted text-xs uppercase tracking-wider font-semibold">Your Vehicle</h3>
+              <button
+                onClick={handleToggleAvailability}
+                disabled={toggleLoading}
+                className={`px-3 py-1 rounded-xl text-xs font-semibold border transition-all ${
+                  profile.available
+                    ? 'bg-success/15 border-success/30 text-success hover:bg-success/25'
+                    : 'bg-warning/15 border-warning/30 text-warning hover:bg-warning/25'
+                } disabled:opacity-50`}
+                title="Click to toggle availability"
+              >
+                {toggleLoading ? 'Updating...' : profile.available ? '🟢 Online (Available)' : '⏸️ Offline (Paused)'}
+              </button>
+            </div>
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-2xl">
                 🚗
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-text-primary font-semibold">{profile.vehicle_model}</p>
                 <p className="text-text-secondary text-sm">{profile.vehicle_number}</p>
-                <p className="text-text-muted text-xs mt-0.5">{profile.seats} seats · {profile.available ? '🟢 Available' : '🔴 On trip'}</p>
+                <p className="text-text-muted text-xs mt-0.5">{profile.seats} seats · {profile.available ? 'Ready for ride assignments' : 'Currently off-duty'}</p>
               </div>
             </div>
           </div>
@@ -253,7 +287,14 @@ export default function DriverDashboard() {
                       </Popup>
                     </Marker>
                   ))}
-                  {mapStops.length > 1 && (
+                  {groupDetail?.geometry && groupDetail.geometry.length > 1 ? (
+                    <Polyline
+                      positions={groupDetail.geometry}
+                      color="#00D2D3"
+                      weight={4}
+                      opacity={0.85}
+                    />
+                  ) : mapStops.length > 1 && (
                     <Polyline
                       positions={mapStops.map(s => [s.lat, s.lng])}
                       color="#00D2D3"

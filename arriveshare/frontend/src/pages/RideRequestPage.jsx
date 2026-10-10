@@ -67,10 +67,9 @@ export default function RideRequestPage() {
       }
     });
 
-    // Default arrival time to now + 30 min
-    const now = new Date();
-    now.setMinutes(now.getMinutes() + 30);
-    setArrivalTime(now.toISOString().slice(0, 16));
+    // Default arrival time to now + 30 min (in local timezone)
+    const localNow = new Date(Date.now() - new Date().getTimezoneOffset() * 60000 + 30 * 60000);
+    setArrivalTime(localNow.toISOString().slice(0, 16));
   }, []);
 
   const handleMapClick = (latlng) => {
@@ -291,6 +290,33 @@ export default function RideRequestPage() {
               </button>
             </div>
           </div>
+
+          {/* Instant Fare Estimate Preview */}
+          {selectedStation && destLat && destLng && (
+            <div className="glass rounded-2xl p-4 animate-fade-in-up border border-border">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-text-secondary text-xs uppercase tracking-wider font-semibold">Route Estimate</span>
+                <span className="text-accent text-xs font-medium">~{((Math.hypot((selectedStation.latitude - destLat) * 111, (selectedStation.longitude - destLng) * 111 * Math.cos(destLat * Math.PI / 180)))).toFixed(1)} km</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-text-muted text-xs">Solo Fare</p>
+                  <p className="text-text-secondary font-bold text-base">
+                    {'\u20B9'}{(50 + Math.hypot((selectedStation.latitude - destLat) * 111, (selectedStation.longitude - destLng) * 111 * Math.cos(destLat * Math.PI / 180)) * 12).toFixed(0)}
+                  </p>
+                </div>
+                {rideType === 'shared' && (
+                  <div className="text-right">
+                    <p className="text-success text-xs font-semibold">Estimated Shared</p>
+                    <p className="text-success font-extrabold text-xl">
+                      ~{'\u20B9'}{((50 + Math.hypot((selectedStation.latitude - destLat) * 111, (selectedStation.longitude - destLng) * 111 * Math.cos(destLat * Math.PI / 180)) * 12) * 0.45).toFixed(0)}
+                    </p>
+                    <span className="text-[10px] text-success/80">Save up to 55%+</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Submit */}
           <button
