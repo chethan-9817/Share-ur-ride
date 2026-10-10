@@ -32,6 +32,16 @@ class Settings(BaseSettings):
     # External services
     OSRM_BASE_URL: str = "https://router.project-osrm.org"
 
+    # SMTP Email Configuration
+    SMTP_ENABLED: bool = False
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = "no-reply@arriveshare.com"
+    SMTP_FROM_NAME: str = "ArriveShare"
+    SMTP_USE_TLS: bool = True
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

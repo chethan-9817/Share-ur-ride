@@ -72,6 +72,9 @@ def get_optional_user(
         return None
 
 
+from .services.email import is_demo_email, generate_otp, send_verification_email
+
+
 @router.post("/register", response_model=UserResponse)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user account."""
@@ -82,29 +85,49 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Email or phone already registered")
 
+    is_demo = is_demo_email(user_data.email)
+    otp = MOCK_OTP if is_demo else generate_otp(6)
+
     user = User(
         name=user_data.name,
         email=user_data.email,
         phone=user_data.phone,
         role=user_data.role,
-        otp_code=MOCK_OTP,
+        otp_code=otp,
     )
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    if not is_demo:
+        send_verification_email(user.email, user.name, otp)
+
     return user
 
 
 @router.post("/send-otp")
 def send_otp(data: OTPRequest, db: Session = Depends(get_db)):
-    """Send a mock OTP to the user's email (always '1234' in dev)."""
+    """Send OTP to user: mock OTP for demo users, real email for new users."""
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user.otp_code = MOCK_OTP
+    is_demo = is_demo_email(user.email)
+    if is_demo:
+        user.otp_code = MOCK_OTP
+        hint = "Use 1234 in dev mode (Demo account)"
+    else:
+        otp = generate_otp(6)
+        user.otp_code = otp
+        send_verification_email(user.email, user.name, otp)
+        hint = "Verification code sent to your email"
+
     db.commit()
-    return {"message": f"OTP sent to {data.email}", "hint": "Use 1234 in dev mode"}
+    return {
+        "message": f"OTP sent to {data.email}",
+        "hint": hint,
+        "is_demo": is_demo,
+    }
 
 
 @router.post("/verify-otp", response_model=Token)
@@ -114,7 +137,8 @@ def verify_otp(data: OTPVerify, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if user.otp_code != data.otp:
+    is_demo = is_demo_email(user.email)
+    if data.otp != user.otp_code and not (is_demo and data.otp == MOCK_OTP):
         raise HTTPException(status_code=400, detail="Invalid OTP")
 
     user.verified = True
