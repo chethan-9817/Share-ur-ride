@@ -125,13 +125,12 @@ def test_ride_lifecycle_and_matching():
 
     # 6. Test share trip safety feature
     share_payload = {
-        "contacts": [
-            {"name": "Emergency Contact", "phone": "+91 98765 00000"}
-        ]
+        "contact_name": "Emergency Contact",
+        "contact_phone": "+919876500000",
     }
     share_resp = client.post(f"/api/rides/{ride2['id']}/share-trip", json=share_payload, headers=p2_headers)
     assert share_resp.status_code == 200
-    assert share_resp.json()["shared"] is True
+    assert share_resp.json()["contact_name"] == "Emergency Contact"
     print("  ✓ Safety feature: Trip details shared with trusted emergency contacts")
 
     # 7. Check group route geometry endpoint
@@ -144,7 +143,9 @@ def test_ride_lifecycle_and_matching():
     print(f"  ✓ Group route returned {len(route_data['stops'])} stops with {len(route_data['geometry'])} road coordinate points")
 
     # 8. Driver operations
-    driver_token = login_user("driver1@arriveshare.test")
+    grp_resp = client.get(f"/api/groups/{group_id}", headers=p2_headers).json()
+    assigned_driver_id = grp_resp.get("driver_id") or 1
+    driver_token = login_user(f"driver{assigned_driver_id}@arriveshare.test")
     driver_headers = {"Authorization": f"Bearer {driver_token}"}
 
     # Driver toggle availability
