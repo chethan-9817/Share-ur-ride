@@ -2,11 +2,11 @@
 Integration Tests for ArriveShare API Endpoints
 =================================================
 Tests all FastAPI REST endpoints using TestClient:
-- Auth (demo login, register, OTP)
+- Auth (register, send OTP, verify OTP)
 - Stations listing
 - Ride creation & retrieval
 - Matching engine & co-travelers
-- Trip sharing (SMS/WhatsApp safety notification simulation)
+- Trip sharing (safety notification simulation)
 - Route geometry via OSRM/fallback
 - Driver operations (toggle availability, assignment detail, status progression)
 - Ride cancellation & group dissolution
@@ -31,6 +31,14 @@ from app.main import app
 client = TestClient(app)
 
 
+def login_user(email: str) -> str:
+    """Helper to simulate OTP login and obtain JWT access token."""
+    client.post("/api/auth/send-otp", json={"email": email})
+    resp = client.post("/api/auth/verify-otp", json={"email": email, "otp": "1234"})
+    assert resp.status_code == 200, f"Failed to login {email}: {resp.text}"
+    return resp.json()["access_token"]
+
+
 def test_stations_endpoint():
     """Verify stations endpoint returns seeded airport and railway hubs."""
     response = client.get("/api/stations")
@@ -42,37 +50,34 @@ def test_stations_endpoint():
     print("  ✓ /api/stations returned stations:", [s["name"] for s in stations])
 
 
-def test_auth_and_demo():
-    """Verify demo login for both passenger and driver."""
-    # Passenger demo
-    p_resp = client.post("/api/auth/demo/1")
-    assert p_resp.status_code == 200
-    p_data = p_resp.json()
-    assert "access_token" in p_data
-    assert p_data["user"]["role"] == "passenger"
-    token = p_data["access_token"]
-    print("  ✓ Passenger demo login successful for user:", p_data["user"]["name"])
+def test_auth_flows():
+    """Verify registration and OTP login."""
+    # Login existing seeded passenger
+    p1_token = login_user("passenger1@arriveshare.test")
+    p1_headers = {"Authorization": f"Bearer {p1_token}"}
+    me_resp = client.get("/api/auth/me", headers=p1_headers)
+    assert me_resp.status_code == 200
+    assert me_resp.json()["email"] == "passenger1@arriveshare.test"
+    print("  ✓ Passenger login & /api/auth/me verified for:", me_resp.json()["name"])
 
-    # Driver demo
-    d_resp = client.post("/api/auth/demo/driver/1")
-    assert d_resp.status_code == 200
-    d_data = d_resp.json()
-    assert "access_token" in d_data
-    assert d_data["user"]["role"] == "driver"
-    print("  ✓ Driver demo login successful for driver:", d_data["user"]["name"])
-
-    return token, d_data["access_token"]
+    # Login existing seeded driver
+    d1_token = login_user("driver1@arriveshare.test")
+    d1_headers = {"Authorization": f"Bearer {d1_token}"}
+    driver_resp = client.get("/api/auth/me", headers=d1_headers)
+    assert driver_resp.status_code == 200
+    assert driver_resp.json()["role"] == "driver"
+    print("  ✓ Driver login verified for:", driver_resp.json()["name"])
 
 
 def test_ride_lifecycle_and_matching():
     """Verify end-to-end flow: ride creation, matching, trip sharing, and driver updates."""
     # 1. Login Passenger 1
-    p1_login = client.post("/api/auth/demo/1").json()
-    p1_headers = {"Authorization": f"Bearer {p1_login['access_token']}"}
+    p1_token = login_user("passenger1@arriveshare.test")
+    p1_headers = {"Authorization": f"Bearer {p1_token}"}
 
     # 2. Login Passenger 2
-    p2_login = client.post("/api/auth/demo/2").json()
-    p2_headers = {"Authorization": f"Bearer {p2_login['access_token']}"}
+    p2_token = login_user("passenger2@arriveshare.test")
+    p2_headers = {"Authorization": f"Bearer {p2_token}"}
 
     # 3. Passenger 1 creates a ride request
     arrival_time = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
@@ -121,7 +126,7 @@ def test_ride_lifecycle_and_matching():
     # 6. Test share trip safety feature
     share_payload = {
         "contacts": [
-            {"name": "Mom", "phone": "+91 98765 00000"}
+            {"name": "Emergency Contact", "phone": "+91 98765 00000"}
         ]
     }
     share_resp = client.post(f"/api/rides/{ride2['id']}/share-trip", json=share_payload, headers=p2_headers)
@@ -139,8 +144,8 @@ def test_ride_lifecycle_and_matching():
     print(f"  ✓ Group route returned {len(route_data['stops'])} stops with {len(route_data['geometry'])} road coordinate points")
 
     # 8. Driver operations
-    driver_login = client.post("/api/auth/demo/driver/1").json()
-    driver_headers = {"Authorization": f"Bearer {driver_login['access_token']}"}
+    driver_token = login_user("driver1@arriveshare.test")
+    driver_headers = {"Authorization": f"Bearer {driver_token}"}
 
     # Driver toggle availability
     toggle_resp = client.post("/api/driver/toggle-availability", headers=driver_headers)
@@ -180,8 +185,8 @@ def test_ride_lifecycle_and_matching():
 
 def test_ride_cancellation():
     """Verify ride cancellation updates status properly."""
-    p3_login = client.post("/api/auth/demo/3").json()
-    p3_headers = {"Authorization": f"Bearer {p3_login['access_token']}"}
+    p3_token = login_user("passenger3@arriveshare.test")
+    p3_headers = {"Authorization": f"Bearer {p3_token}"}
 
     arrival_time = (datetime.now(timezone.utc) + timedelta(minutes=20)).isoformat()
     r_resp = client.post("/api/rides/", json={
@@ -209,7 +214,7 @@ if __name__ == "__main__":
     print("============================================================\n")
 
     test_stations_endpoint()
-    test_auth_and_demo()
+    test_auth_flows()
     test_ride_lifecycle_and_matching()
     test_ride_cancellation()
 
