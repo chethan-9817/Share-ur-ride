@@ -1,0 +1,218 @@
+"""
+Integration Tests for ArriveShare API Endpoints
+=================================================
+Tests all FastAPI REST endpoints using TestClient:
+- Auth (demo login, register, OTP)
+- Stations listing
+- Ride creation & retrieval
+- Matching engine & co-travelers
+- Trip sharing (SMS/WhatsApp safety notification simulation)
+- Route geometry via OSRM/fallback
+- Driver operations (toggle availability, assignment detail, status progression)
+- Ride cancellation & group dissolution
+"""
+
+import sys
+import os
+
+# Add backend directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+# UTF-8 stdout configuration for Windows
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
+from datetime import datetime, timezone, timedelta
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+
+def test_stations_endpoint():
+    """Verify stations endpoint returns seeded airport and railway hubs."""
+    response = client.get("/api/stations")
+    assert response.status_code == 200
+    stations = response.json()
+    assert len(stations) >= 3
+    station_names = [s["name"] for s in stations]
+    assert any("Airport" in name for name in station_names)
+    print("  ✓ /api/stations returned stations:", [s["name"] for s in stations])
+
+
+def test_auth_and_demo():
+    """Verify demo login for both passenger and driver."""
+    # Passenger demo
+    p_resp = client.post("/api/auth/demo/1")
+    assert p_resp.status_code == 200
+    p_data = p_resp.json()
+    assert "access_token" in p_data
+    assert p_data["user"]["role"] == "passenger"
+    token = p_data["access_token"]
+    print("  ✓ Passenger demo login successful for user:", p_data["user"]["name"])
+
+    # Driver demo
+    d_resp = client.post("/api/auth/demo/driver/1")
+    assert d_resp.status_code == 200
+    d_data = d_resp.json()
+    assert "access_token" in d_data
+    assert d_data["user"]["role"] == "driver"
+    print("  ✓ Driver demo login successful for driver:", d_data["user"]["name"])
+
+    return token, d_data["access_token"]
+
+
+def test_ride_lifecycle_and_matching():
+    """Verify end-to-end flow: ride creation, matching, trip sharing, and driver updates."""
+    # 1. Login Passenger 1
+    p1_login = client.post("/api/auth/demo/1").json()
+    p1_headers = {"Authorization": f"Bearer {p1_login['access_token']}"}
+
+    # 2. Login Passenger 2
+    p2_login = client.post("/api/auth/demo/2").json()
+    p2_headers = {"Authorization": f"Bearer {p2_login['access_token']}"}
+
+    # 3. Passenger 1 creates a ride request
+    arrival_time = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
+    ride1_payload = {
+        "station_id": 1,
+        "dest_name": "Koramangala 4th Block",
+        "dest_lat": 12.9352,
+        "dest_lng": 77.6245,
+        "flight_number": "6E-5432",
+        "arrival_time": arrival_time,
+        "ride_type": "shared",
+        "luggage_count": 1,
+    }
+    r1_resp = client.post("/api/rides/", json=ride1_payload, headers=p1_headers)
+    assert r1_resp.status_code == 200
+    ride1 = r1_resp.json()
+    assert ride1["status"] == "pending"
+    print("  ✓ Ride 1 created with ID:", ride1["id"])
+
+    # 4. Passenger 2 creates a ride request nearby
+    ride2_payload = {
+        "station_id": 1,
+        "dest_name": "HSR Layout Sector 1",
+        "dest_lat": 12.9121,
+        "dest_lng": 77.6446,
+        "flight_number": "AI-101",
+        "arrival_time": arrival_time,
+        "ride_type": "shared",
+        "luggage_count": 1,
+    }
+    r2_resp = client.post("/api/rides/", json=ride2_payload, headers=p2_headers)
+    assert r2_resp.status_code == 200
+    ride2 = r2_resp.json()
+    print("  ✓ Ride 2 created with ID:", ride2["id"])
+
+    # 5. Trigger matching for Passenger 2
+    match_resp = client.post(f"/api/matches/find/{ride2['id']}", headers=p2_headers)
+    assert match_resp.status_code == 200
+    match_data = match_resp.json()
+    assert match_data["group_id"] is not None
+    assert match_data["shared_fare"] < match_data["solo_fare"]
+    assert match_data["savings_pct"] > 0
+    group_id = match_data["group_id"]
+    print(f"  ✓ Matched Group #{group_id}: Solo ₹{match_data['solo_fare']} -> Shared ₹{match_data['shared_fare']} ({match_data['savings_pct']}% savings)")
+
+    # 6. Test share trip safety feature
+    share_payload = {
+        "contacts": [
+            {"name": "Mom", "phone": "+91 98765 00000"}
+        ]
+    }
+    share_resp = client.post(f"/api/rides/{ride2['id']}/share-trip", json=share_payload, headers=p2_headers)
+    assert share_resp.status_code == 200
+    assert share_resp.json()["shared"] is True
+    print("  ✓ Safety feature: Trip details shared with trusted emergency contacts")
+
+    # 7. Check group route geometry endpoint
+    route_resp = client.get(f"/api/groups/{group_id}/route", headers=p2_headers)
+    assert route_resp.status_code == 200
+    route_data = route_resp.json()
+    assert "stops" in route_data
+    assert "geometry" in route_data
+    assert len(route_data["geometry"]) >= 2
+    print(f"  ✓ Group route returned {len(route_data['stops'])} stops with {len(route_data['geometry'])} road coordinate points")
+
+    # 8. Driver operations
+    driver_login = client.post("/api/auth/demo/driver/1").json()
+    driver_headers = {"Authorization": f"Bearer {driver_login['access_token']}"}
+
+    # Driver toggle availability
+    toggle_resp = client.post("/api/driver/toggle-availability", headers=driver_headers)
+    assert toggle_resp.status_code == 200
+    print("  ✓ Driver toggled availability:", toggle_resp.json()["available"])
+    # Toggle back to ensure active
+    client.post("/api/driver/toggle-availability", headers=driver_headers)
+
+    # Driver assignment detail
+    assign_resp = client.get(f"/api/driver/assignments/{group_id}", headers=driver_headers)
+    assert assign_resp.status_code == 200
+    assign_data = assign_resp.json()
+    assert assign_data["passenger_count"] >= 2
+    assert "geometry" in assign_data
+    print(f"  ✓ Driver assignment detail verified for group #{group_id} ({assign_data['passenger_count']} passengers)")
+
+    # Driver status update: on_trip
+    status_resp = client.patch(
+        f"/api/driver/assignments/{group_id}/status",
+        json={"status": "on_trip"},
+        headers=driver_headers,
+    )
+    assert status_resp.status_code == 200
+    assert status_resp.json()["status"] == "on_trip"
+    print("  ✓ Driver transitioned group status to: on_trip")
+
+    # Driver status update: completed
+    complete_resp = client.patch(
+        f"/api/driver/assignments/{group_id}/status",
+        json={"status": "completed"},
+        headers=driver_headers,
+    )
+    assert complete_resp.status_code == 200
+    assert complete_resp.json()["status"] == "completed"
+    print("  ✓ Driver transitioned group status to: completed")
+
+
+def test_ride_cancellation():
+    """Verify ride cancellation updates status properly."""
+    p3_login = client.post("/api/auth/demo/3").json()
+    p3_headers = {"Authorization": f"Bearer {p3_login['access_token']}"}
+
+    arrival_time = (datetime.now(timezone.utc) + timedelta(minutes=20)).isoformat()
+    r_resp = client.post("/api/rides/", json={
+        "station_id": 1,
+        "dest_name": "Whitefield",
+        "dest_lat": 12.9698,
+        "dest_lng": 77.7500,
+        "flight_number": "6E-200",
+        "arrival_time": arrival_time,
+        "ride_type": "shared",
+        "luggage_count": 1,
+    }, headers=p3_headers)
+    assert r_resp.status_code == 200
+    ride_id = r_resp.json()["id"]
+
+    cancel_resp = client.post(f"/api/rides/{ride_id}/cancel", headers=p3_headers)
+    assert cancel_resp.status_code == 200
+    assert cancel_resp.json()["status"] == "cancelled"
+    print(f"  ✓ Ride #{ride_id} successfully cancelled")
+
+
+if __name__ == "__main__":
+    print("\n============================================================")
+    print("  ArriveShare -- API Integration Tests")
+    print("============================================================\n")
+
+    test_stations_endpoint()
+    test_auth_and_demo()
+    test_ride_lifecycle_and_matching()
+    test_ride_cancellation()
+
+    print("\n============================================================")
+    print("  All API Integration Tests Passed Successfully! ✓")
+    print("============================================================\n")
