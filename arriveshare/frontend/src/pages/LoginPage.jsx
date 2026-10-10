@@ -220,23 +220,57 @@ export default function LoginPage() {
 
         {mode === 'otp' && (
           <form onSubmit={handleVerifyOtp}>
-            <h2 className="text-xl font-semibold mb-2">Enter OTP</h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl font-semibold">Enter Verification Code</h2>
+              <button
+                type="button"
+                onClick={() => { setMode('login'); setOtp(''); }}
+                className="text-xs text-text-muted hover:text-text-primary transition-colors"
+              >
+                Change email
+              </button>
+            </div>
             <p className="text-text-secondary text-sm mb-6">
-              We sent a code to <span className="text-primary-light">{email}</span>
+              We sent a code to <span className="text-primary-light font-medium">{email}</span>
               <br />
-              <span className="text-text-muted">(Hint: use 1234)</span>
+              <span className="text-text-muted text-xs">
+                {isDemoEmail
+                  ? '(Demo account: use 1234)'
+                  : otpHint || 'Check your inbox for your 6-digit verification code.'}
+              </span>
             </p>
             <input
-              type="text" value={otp} onChange={(e) => setOtp(e.target.value)} maxLength={4}
-              className="w-full px-4 py-4 rounded-xl bg-bg-surface border border-border text-text-primary text-center text-2xl tracking-[0.5em] focus:border-primary focus:outline-none transition-colors mb-6"
-              placeholder="----" required
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              maxLength={6}
+              className="w-full px-4 py-4 rounded-xl bg-bg-surface border border-border text-text-primary text-center text-2xl tracking-[0.4em] font-mono focus:border-primary focus:outline-none transition-colors mb-4"
+              placeholder={isDemoEmail ? '1234' : '------'}
+              required
+              autoFocus
             />
             <button
-              type="submit" disabled={loading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white font-semibold hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-[0.98] disabled:opacity-50"
+              type="submit"
+              disabled={loading || !otp}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white font-semibold hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-[0.98] disabled:opacity-50 mb-3"
             >
-              {loading ? 'Verifying...' : 'Verify & Login'}
+              {loading ? 'Verifying...' : 'Verify & Continue'}
             </button>
+
+            {!isDemoEmail && (
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={resendCooldown > 0 || loading}
+                  className="text-xs text-text-secondary hover:text-primary-light transition-colors disabled:opacity-50"
+                >
+                  {resendCooldown > 0
+                    ? `Resend code in ${resendCooldown}s`
+                    : "Didn't receive code? Resend"}
+                </button>
+              </div>
+            )}
           </form>
         )}
       </div>
