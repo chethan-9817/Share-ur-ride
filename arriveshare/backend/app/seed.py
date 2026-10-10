@@ -228,10 +228,10 @@ def seed_ride_requests(db: Session):
 
 def seed_all(db: Session):
     """Run all seed functions in order."""
-    print("🌱 Seeding stations...")
+    print("[SEED] Seeding stations...")
     seed_stations(db)
-    print("🌱 Seeding users and drivers...")
+    print("[SEED] Seeding users and drivers...")
     seed_users_and_drivers(db)
-    print("🌱 Seeding ride requests...")
+    print("[SEED] Seeding ride requests...")
     seed_ride_requests(db)
-    print("✅ Seed data loaded successfully!")
+    print("[SEED] Seed data loaded successfully!")

@@ -5,7 +5,7 @@ All settings are loaded from environment variables (.env file).
 No hardcoded secrets — every tunable parameter is configurable.
 """
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -32,9 +32,7 @@ class Settings(BaseSettings):
     # External services
     OSRM_BASE_URL: str = "https://router.project-osrm.org"
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 settings = Settings()
