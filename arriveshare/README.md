@@ -463,6 +463,7 @@ All requests requiring authentication expect the HTTP header:
 - `POST /api/rides/{ride_id}/confirm` — Confirm and accept a matched or booked ride.
 - `PATCH /api/rides/{ride_id}/status` — Update ride status (`pending`, `matched`, `confirmed`, `on_trip`, `completed`, `cancelled`).
 - `POST /api/rides/{ride_id}/share-trip` — Record emergency trip sharing with contact (`contact_name`, `contact_phone`).
+- `POST /api/rides/{ride_id}/cancel` — Cancel a ride request, recalculate group route and fares, or dissolve group if fewer than 2 passengers remain.
 
 ### Matching (`/api/matches`)
 - `POST /api/matches/find/{ride_id}` — Run the matching engine on a pending shared ride request. Returns matched group, co-travelers, drop-off sequence, and savings percentage.
@@ -477,6 +478,7 @@ All requests requiring authentication expect the HTTP header:
 - `GET /api/driver/assignments` — List all ride groups assigned to this driver.
 - `GET /api/driver/assignments/{group_id}` — Get specific trip details, passenger names, stops checklist, and total earnings.
 - `PATCH /api/driver/assignments/{group_id}/status` — Progress trip status (`forming` $\rightarrow$ `confirmed` $\rightarrow$ `on_trip` $\rightarrow$ `completed`).
+- `POST /api/driver/toggle-availability` — Toggle driver availability between online and off-duty.
 
 ---
 
