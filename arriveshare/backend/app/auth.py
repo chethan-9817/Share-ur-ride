@@ -121,7 +121,7 @@ def verify_otp(data: OTPVerify, db: Session = Depends(get_db)):
     user.otp_code = None
     db.commit()
 
-    token = create_access_token({"sub": user.id})
+    token = create_access_token({"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
 
 
