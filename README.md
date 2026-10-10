@@ -55,6 +55,8 @@ ArriveShare is an end-to-end intelligent ride-pooling platform designed specific
 - 📍 **Hub-Based Origin Selection:** Pre-configured with major arrival hubs in Bangalore (Kempegowda International Airport BLR, HAL Airport, Bangalore City Railway Station, Yeshwanthpur Railway Station).
 - 🧠 **Dynamic Detour Matching Engine:** Filters arrivals by time window (`±20 min`), computes corridor detours, verifies individual passenger detour tolerances (`≤ 5 km`), and respects vehicle seating capacity (`4 passengers`).
 - 🗺️ **Multi-Stop Route Optimization:** Orders drop-offs greedily to minimize total vehicle travel distance, backed by OSRM (Open Source Routing Machine) with automatic Haversine fallback.
+- 💰 **Mathematical Fair-Share Pricing:** Single base fare split with per-kilometer charges calculated per rider based on relative distance traveled.
+
 
 
 
