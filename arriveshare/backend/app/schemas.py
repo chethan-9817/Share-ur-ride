@@ -7,7 +7,7 @@ Separate from ORM models to keep validation and serialization clean.
 
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 # ── Auth ──────────────────────────────────────────────────────────────
@@ -42,8 +42,7 @@ class UserResponse(BaseModel):
     verified: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── Stations ──────────────────────────────────────────────────────────
@@ -56,8 +55,7 @@ class StationResponse(BaseModel):
     longitude: float
     city: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── Ride Requests ─────────────────────────────────────────────────────
@@ -92,8 +90,7 @@ class RideRequestResponse(BaseModel):
     user: Optional[UserResponse] = None
     station: Optional[StationResponse] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RideStatusUpdate(BaseModel):
@@ -109,8 +106,7 @@ class DriverBrief(BaseModel):
     seats: int
     user: Optional[UserResponse] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class GroupResponse(BaseModel):
@@ -126,8 +122,7 @@ class GroupResponse(BaseModel):
     station: Optional[StationResponse] = None
     driver: Optional[DriverBrief] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ── Matching ──────────────────────────────────────────────────────────
@@ -164,8 +159,7 @@ class DriverResponse(BaseModel):
     current_lng: Optional[float] = None
     user: Optional[UserResponse] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DriverAssignment(BaseModel):
@@ -188,5 +182,4 @@ class TripShareResponse(BaseModel):
     contact_phone: str
     shared_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

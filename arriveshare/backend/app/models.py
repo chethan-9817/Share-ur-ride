@@ -5,7 +5,7 @@ Six tables covering users, stations, ride requests, ride groups, drivers,
 and trip-share safety records. Schema is PostgreSQL-compatible.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -22,7 +22,7 @@ class User(Base):
     role = Column(String, nullable=False, default="passenger")   # passenger | driver
     verified = Column(Boolean, default=False)
     otp_code = Column(String, nullable=True)                     # mock OTP for dev
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     ride_requests = relationship("RideRequest", back_populates="user")
     driver_profile = relationship("Driver", back_populates="user", uselist=False)
@@ -57,7 +57,7 @@ class RideGroup(Base):
     total_distance_km = Column(Float, nullable=True)
     total_fare = Column(Float, nullable=True)
     capacity = Column(Integer, default=4)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     station = relationship("Station", back_populates="ride_groups")
     driver = relationship("Driver", back_populates="assigned_groups")
@@ -87,7 +87,7 @@ class RideRequest(Base):
     shared_fare = Column(Float, nullable=True)
     savings_pct = Column(Float, nullable=True)
     drop_order = Column(Integer, nullable=True)        # 1-based order in the group route
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="ride_requests")
     station = relationship("Station", back_populates="ride_requests")
@@ -120,6 +120,6 @@ class TripShare(Base):
     ride_request_id = Column(Integer, ForeignKey("ride_requests.id"), nullable=False)
     contact_name = Column(String, nullable=False)
     contact_phone = Column(String, nullable=False)
-    shared_at = Column(DateTime, default=datetime.utcnow)
+    shared_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     ride_request = relationship("RideRequest", back_populates="trip_shares")

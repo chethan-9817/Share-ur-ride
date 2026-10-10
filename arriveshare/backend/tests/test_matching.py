@@ -20,7 +20,7 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -192,7 +192,7 @@ def test_scenario_a_three_same_destination():
     station = seed_test_station(db)
     add_driver(db)
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     rides = []
     for i in range(1, 4):
         add_user(db, i, f"Passenger {i}")
@@ -213,7 +213,8 @@ def test_scenario_a_three_same_destination():
     assert result["group_id"] is not None
     assert len(result["co_travelers"]) >= 2, f"Expected ≥2 co-travelers, got {len(result['co_travelers'])}"
     assert result["savings_pct"] > 0
-    print(f"  ✓ Group #{result['group_id']} with {len(result['co_travelers'])} travelers")
+    total_travelers = len(result["dropoff_order"])
+    print(f"  ✓ Group #{result['group_id']} with {total_travelers} travelers")
     print(f"  ✓ Solo ₹{result['solo_fare']} → Shared ₹{result['shared_fare']} (save {result['savings_pct']}%)")
     print(f"  ✓ Route: {result['total_route_km']} km")
 
@@ -228,7 +229,7 @@ def test_scenario_b_route_overlap():
     db = create_test_db()
     station = seed_test_station(db)
     add_driver(db)
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     add_user(db, 1, "Alice")
     r1 = RideRequest(
@@ -277,7 +278,7 @@ def test_scenario_c_no_match():
     ride = RideRequest(
         id=1, user_id=1, station_id=2,
         dest_lat=12.8456, dest_lng=77.6603, dest_name="Electronic City",
-        arrival_time=datetime.utcnow(), ride_type="shared", status="pending",
+        arrival_time=datetime.now(timezone.utc), ride_type="shared", status="pending",
     )
     db.add(ride)
     db.commit()
@@ -302,7 +303,7 @@ def test_scenario_d_capacity_overflow():
     station = seed_test_station_railway(db)
     add_driver(db, 1, 100)
     add_driver(db, 2, 101)
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     destinations = [
         ("Jayanagar", 12.9308, 77.5838),
@@ -328,7 +329,7 @@ def test_scenario_d_capacity_overflow():
     # Match first passenger
     result1 = match_ride(db, rides[0])
     assert result1 is not None, "Expected a match for passenger 1!"
-    group1_size = len(result1["co_travelers"])
+    group1_size = len(result1["dropoff_order"])
     assert group1_size <= settings.CAB_CAPACITY, \
         f"Group exceeded capacity: {group1_size} > {settings.CAB_CAPACITY}"
     print(f"  ✓ Group 1: {group1_size} passengers (max {settings.CAB_CAPACITY})")
@@ -342,7 +343,7 @@ def test_scenario_d_capacity_overflow():
         # Try matching the remaining passenger(s)
         result2 = match_ride(db, pending[0])
         if result2:
-            print(f"  ✓ Group 2: {len(result2['co_travelers'])} passengers")
+            print(f"  ✓ Group 2: {len(result2['dropoff_order'])} passengers")
         else:
             print(f"  ✓ Remaining passenger offered solo ride (₹{pending[0].solo_fare})")
 

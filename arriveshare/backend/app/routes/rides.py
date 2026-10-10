@@ -134,7 +134,7 @@ def confirm_ride(
     # Check if all members of the group have confirmed
     if ride.group_id:
         from ..models import RideGroup
-        group = db.query(RideGroup).get(ride.group_id)
+        group = db.get(RideGroup, ride.group_id)
         if group:
             all_confirmed = all(r.status == "confirmed" for r in group.ride_requests)
             if all_confirmed:
@@ -203,7 +203,7 @@ def cancel_ride(
         from ..models import RideGroup, Station
         from ..services.matching import _finalize_group
 
-        group = db.query(RideGroup).get(old_group_id)
+        group = db.get(RideGroup, old_group_id)
         if group:
             remaining = [
                 r for r in group.ride_requests
@@ -221,7 +221,7 @@ def cancel_ride(
                     group.driver.available = True
                 db.delete(group)
             else:
-                station = db.query(Station).get(group.station_id)
+                station = db.get(Station, group.station_id)
                 dests = [
                     {
                         "ride_request_id": r.id,

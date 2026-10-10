@@ -10,7 +10,7 @@ Destinations span real Bangalore neighborhoods to produce
 meaningful matches during testing.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
 from .models import User, Station, Driver, RideRequest
 
@@ -148,7 +148,7 @@ def seed_ride_requests(db: Session):
 
     Remaining (IDs 12-30): Varied requests across stations and destinations
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     dest_list = list(DESTINATIONS.items())
 
     requests_data = [

@@ -176,7 +176,7 @@ async def get_osrm_distance(
         haversine(coords[i][0], coords[i][1], coords[i+1][0], coords[i+1][1])
         for i in range(len(coords) - 1)
     )
-    return total, []
+    return total, coords
 
 
 def get_solo_distance(

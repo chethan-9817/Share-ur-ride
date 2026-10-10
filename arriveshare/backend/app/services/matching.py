@@ -171,7 +171,7 @@ def match_ride(
       5. Respect capacity limits; overflow → second group
       6. Optimize drop-off order and calculate fares
     """
-    station = db.query(Station).get(ride.station_id)
+    station = db.get(Station, ride.station_id)
     if not station:
         return None
 
@@ -325,7 +325,7 @@ def _finalize_group(
 
     # Update each ride request with fare info and drop order
     for dest in ordered:
-        ride_req = db.query(RideRequest).get(dest["ride_request_id"])
+        ride_req = db.get(RideRequest, dest["ride_request_id"])
         if ride_req:
             ride_req.drop_order = dest["order"]
             fare_info = next(
@@ -360,7 +360,7 @@ def _finalize_group(
     for dest in ordered:
         if requesting_ride_id and dest["ride_request_id"] == requesting_ride_id:
             continue
-        rr = db.query(RideRequest).get(dest["ride_request_id"])
+        rr = db.get(RideRequest, dest["ride_request_id"])
         if rr and rr.user:
             co_travelers.append({
                 "first_name": rr.user.name.split()[0],
@@ -400,7 +400,7 @@ def decline_and_rematch(db: Session, ride: RideRequest) -> Optional[Dict]:
     ride.drop_order = None
 
     if old_group_id:
-        group = db.query(RideGroup).get(old_group_id)
+        group = db.get(RideGroup, old_group_id)
         if group:
             remaining = [r for r in group.ride_requests if r.id != ride.id]
             if len(remaining) < 2:
@@ -417,7 +417,7 @@ def decline_and_rematch(db: Session, ride: RideRequest) -> Optional[Dict]:
                 db.delete(group)
             else:
                 # Recompute for remaining members
-                station = db.query(Station).get(group.station_id)
+                station = db.get(Station, group.station_id)
                 dests = [{
                     "ride_request_id": r.id,
                     "dest_lat": r.dest_lat,

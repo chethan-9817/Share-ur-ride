@@ -86,7 +86,7 @@ def test_ride_lifecycle_and_matching():
         "dest_name": "Koramangala 4th Block",
         "dest_lat": 12.9352,
         "dest_lng": 77.6245,
-        "flight_number": "6E-5432",
+        "flight_train_number": "6E-5432",
         "arrival_time": arrival_time,
         "ride_type": "shared",
         "luggage_count": 1,
@@ -103,7 +103,7 @@ def test_ride_lifecycle_and_matching():
         "dest_name": "HSR Layout Sector 1",
         "dest_lat": 12.9121,
         "dest_lng": 77.6446,
-        "flight_number": "AI-101",
+        "flight_train_number": "AI-101",
         "arrival_time": arrival_time,
         "ride_type": "shared",
         "luggage_count": 1,
@@ -183,6 +183,18 @@ def test_ride_lifecycle_and_matching():
     assert complete_resp.json()["status"] == "completed"
     print("  ✓ Driver transitioned group status to: completed")
 
+    # Cleanup test records
+    from app.database import SessionLocal
+    from app.models import RideRequest, RideGroup, TripShare
+    db = SessionLocal()
+    try:
+        db.query(TripShare).filter(TripShare.ride_request_id.in_([ride1["id"], ride2["id"]])).delete(synchronize_session=False)
+        db.query(RideRequest).filter(RideRequest.id.in_([ride1["id"], ride2["id"]])).delete(synchronize_session=False)
+        db.query(RideGroup).filter(RideGroup.id == group_id).delete(synchronize_session=False)
+        db.commit()
+    finally:
+        db.close()
+
 
 def test_ride_cancellation():
     """Verify ride cancellation updates status properly."""
@@ -195,7 +207,7 @@ def test_ride_cancellation():
         "dest_name": "Whitefield",
         "dest_lat": 12.9698,
         "dest_lng": 77.7500,
-        "flight_number": "6E-200",
+        "flight_train_number": "6E-200",
         "arrival_time": arrival_time,
         "ride_type": "shared",
         "luggage_count": 1,
@@ -207,6 +219,16 @@ def test_ride_cancellation():
     assert cancel_resp.status_code == 200
     assert cancel_resp.json()["status"] == "cancelled"
     print(f"  ✓ Ride #{ride_id} successfully cancelled")
+
+    # Cleanup cancellation test ride
+    from app.database import SessionLocal
+    from app.models import RideRequest
+    db = SessionLocal()
+    try:
+        db.query(RideRequest).filter(RideRequest.id == ride_id).delete(synchronize_session=False)
+        db.commit()
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import engine, Base, SessionLocal
-from .auth import router as auth_router
+from .routes.auth import router as auth_router
 from .routes.stations import router as stations_router
 from .routes.rides import router as rides_router
 from .routes.matches import router as matches_router
