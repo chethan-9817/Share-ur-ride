@@ -16,7 +16,7 @@ ArriveShare is an intelligent, full-stack ride-pooling platform engineered speci
 - [Key Features](#-key-features)
 - [System Architecture](#-system-architecture)
 - [Algorithms & Mathematical Formulations](#-algorithms--mathematical-formulations)
-  - [1. Great-Circle Distance (Haversine Formula)](#1-great-circle-distance-haversine-formula)
+  - [1. Great-Circle Distance (Haversine Formula)](#1-great-circle-distance-haversine-formula)  
   - [2. Pairwise & Group Detour Compatibility Scoring](#2-pairwise--group-detour-compatibility-scoring)
   - [3. Multi-Stop Route Sequencing (Greedy Nearest Neighbor)](#3-multi-stop-route-sequencing-greedy-nearest-neighbor)
   - [4. Proportional Fair-Share Pricing Model](#4-proportional-fair-share-pricing-model)
