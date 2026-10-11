@@ -526,6 +526,8 @@ python -m pytest tests/ -v
    - Online/Offline availability toggle.
    - Total earnings and completed trips tracker.
    - Assigned group route map with numbered pickup and dropoff stops.
+   - Single-click **Accept Ride Group** and trip progression buttons.
+
 
 
 
