@@ -38,3 +38,38 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def ensure_schema_migrations(eng=engine):
+    """Ensure newly added columns exist in SQLite database without losing data."""
+    from sqlalchemy import inspect, text
+    inspector = inspect(eng)
+    table_names = inspector.get_table_names()
+
+    with eng.connect() as conn:
+        # Check ride_requests columns
+        if "ride_requests" in table_names:
+            columns = [c["name"] for c in inspector.get_columns("ride_requests")]
+            if "accepted_fare" not in columns:
+                conn.execute(text("ALTER TABLE ride_requests ADD COLUMN accepted_fare FLOAT"))
+            if "platform_subsidy" not in columns:
+                conn.execute(text("ALTER TABLE ride_requests ADD COLUMN platform_subsidy FLOAT DEFAULT 0.0"))
+            if "accept_expires_at" not in columns:
+                conn.execute(text("ALTER TABLE ride_requests ADD COLUMN accept_expires_at DATETIME"))
+            if "match_window_minutes" not in columns:
+                conn.execute(text("ALTER TABLE ride_requests ADD COLUMN match_window_minutes INTEGER DEFAULT 20"))
+            if "version" not in columns:
+                conn.execute(text("ALTER TABLE ride_requests ADD COLUMN version INTEGER DEFAULT 1"))
+
+        # Check ride_groups columns
+        if "ride_groups" in table_names:
+            columns = [c["name"] for c in inspector.get_columns("ride_groups")]
+            if "platform_subsidy" not in columns:
+                conn.execute(text("ALTER TABLE ride_groups ADD COLUMN platform_subsidy FLOAT DEFAULT 0.0"))
+            if "accept_expires_at" not in columns:
+                conn.execute(text("ALTER TABLE ride_groups ADD COLUMN accept_expires_at DATETIME"))
+            if "version" not in columns:
+                conn.execute(text("ALTER TABLE ride_groups ADD COLUMN version INTEGER DEFAULT 1"))
+
+        conn.commit()
+
