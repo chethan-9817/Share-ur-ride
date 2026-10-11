@@ -28,16 +28,17 @@ ArriveShare is an intelligent, full-stack ride-pooling platform engineered speci
   - [Frontend Setup (React + Vite)](#frontend-setup-react--vite)
 - [Configuration (.env)](#-configuration-env)
 - [API Reference](#-api-reference)
-  - [Authentication](#authentication-apiauth)
-  - [Stations](#stations-apistations)
-  - [Rides](#rides-apirides)
-  - [Matching Engine](#matching-apimatches)
-  - [Ride Groups](#ride-groups-apigroups)
-  - [Driver Operations](#driver-operations-apidriver)
+  - [Authentication (`/api/auth`)](#authentication-apiauth)
+  - [Stations (`/api/stations`)](#stations-apistations)
+  - [Rides (`/api/rides`)](#rides-apirides)
+  - [Matching Engine (`/api/matches`)](#matching-engine-apimatches)
+  - [Ride Groups (`/api/groups`)](#ride-groups-apigroups)
+  - [Driver Operations (`/api/driver`)](#driver-operations-apidriver)
 - [Database Schema](#-database-schema)
-- [Pre-Seeded Scenarios & Unit Testing](#-pre-seeded-scenarios--unit-testing)
+- [Pre-Seeded Scenarios & Automated Testing](#-pre-seeded-scenarios--automated-testing)
   - [Seeded Real-World Scenarios](#seeded-real-world-scenarios)
-  - [Running the Test Suite](#running-the-test-suite)
+  - [Test Suite 1: Matching & Pricing Unit Tests](#test-suite-1-matching--pricing-unit-tests)
+  - [Test Suite 2: API End-to-End Integration Tests](#test-suite-2-api-end-to-end-integration-tests)
 - [Frontend User Flows & UI Walkthrough](#-frontend-user-flows--ui-walkthrough)
 - [Production & Extensibility Roadmap](#-production--extensibility-roadmap)
 
@@ -128,22 +129,25 @@ Every day, tens of thousands of travelers disembark from flights and long-distan
 - 🧠 **Corridor Detour Matching Engine:**
   - Fast $O(1)$ pairwise distance pre-filtering using the Haversine spherical formula.
   - Strict detour qualification ($\le 3.0\text{ km}$ corridor detour).
-  - Individual passenger guarantee ($\text{Effective Distance} - \text{Solo Distance} \le 5.0\text{ km}$).
+  - Individual passenger detour ceiling ($\text{Effective Distance} - \text{Solo Distance} \le 5.0\text{ km}$).
   - Vehicle capacity enforcement ($\le 4\text{ passengers}$ per vehicle).
-- 🗺️ **Multi-Stop Route Optimization:** Heuristic Nearest-Neighbor drop sequencing minimizing total route travel distance, with Open Source Routing Machine (OSRM) integration and offline fallback.
+- 🗺️ **Multi-Stop Route Optimization:** Heuristic Nearest-Neighbor drop sequencing minimizing total route travel distance, with Open Source Routing Machine (OSRM) integration and offline Haversine fallback.
 - 💰 **Mathematically Fair Proportional Pricing:** 
   - Solo fare computed as baseline reference.
   - Group base fare charged once for the vehicle.
   - Variable kilometers distributed proportionally by solo distance weights.
   - Guaranteed savings of **40% to 65%+** for every co-traveler.
+- ✉️ **Dual-Mode Email & OTP Authentication:**
+  - Fast mock OTP (`1234`) for pre-seeded demo accounts (`*@arriveshare.test`, `test@test.com`).
+  - Production-ready SMTP email delivery with HTML branded templates and 6-digit numeric OTP generation for newly registered users, with automatic graceful fallback to developer console logging.
 - 🔒 **Privacy-Preserving Safety Architecture:**
   - Anonymized co-traveler rosters (*first name + platform verification badge + drop sequence order*).
-  - Emergency contact sharing modal to broadcast trip details and vehicle plate info.
+  - Emergency contact sharing modal to broadcast trip details, driver identity, vehicle plate info, and scheduled stop order.
 - 🚕 **Driver Command Center:**
-  - Dedicated driver portal displaying vehicle specs, active availability status, and earnings per trip.
-  - Interactive multi-stop checklist with pickup point and sequential drop-off waypoints.
-  - Trip lifecycle progression (*Forming $\rightarrow$ Confirmed $\rightarrow$ On Trip $\rightarrow$ Completed*).
-- ⚡ **Glassmorphic React Interface:** Dark-mode UI with Tailwind CSS v4, custom CSS design tokens, interactive Leaflet CartoDB dark maps, pulsing radar matching screen, and 1-click demo login buttons.
+  - Dedicated driver portal displaying vehicle specs, active availability toggle, and total earnings.
+  - Interactive multi-stop checklist with pickup hub and sequential drop-off waypoints.
+  - Trip lifecycle progression (*Forming $\rightarrow$ Confirmed $\rightarrow$ On Trip $\rightarrow$ Completed*), automatically freeing the driver upon completion.
+- ⚡ **Glassmorphic React Interface:** Dark-mode UI styled with Tailwind CSS v4 and modern CSS design tokens, interactive Leaflet CartoDB dark maps, pulsing radar matching screen, and 1-click quick demo login buttons.
 
 ---
 
@@ -160,27 +164,27 @@ Every day, tens of thousands of travelers disembark from flights and long-distan
                        ┌──────────────────────────────────────────┐
                        │       FastAPI Application Layer          │
                        │               (Port 8000)                │
-                       └──────┬─────────────┬─────────────┬───────┘
-                              │             │             │
-              ┌───────────────┘             │             └──────────────┐
-              ▼                             ▼                            ▼
-  ┌────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────┐
-  │   Matching Engine      │  │  Fare Splitting Engine │  │ Routing / Distance Svc │
-  │ • Time Window Filter   │  │ • Solo Fare Formula    │  │ • Haversine Great Circle│
-  │ • Pair Detour Scorer   │  │ • Group Route Fare     │  │ • OSRM Road Distance   │
-  │ • Group Capacity Check │  │ • Proportional Weight  │  │ • Nearest-Neighbor TSP │
-  └───────────┬────────────┘  └─────────────┬──────────┘  └───────────┬────────────┘
-              │                             │                         │
-              └──────────────────────┬──────┴─────────────────────────┘
-                                     ▼
-                       ┌───────────────────────────┐
-                       │    SQLAlchemy 2.0 ORM     │
-                       └─────────────┬─────────────┘
-                                     ▼
-                       ┌───────────────────────────┐
-                       │   SQLite Database (MVP)   │
-                       │ (PostgreSQL Production Ready)
-                       └───────────────────────────┘
+                       └───┬─────────────┬─────────────┬───────┬──┘
+                           │             │             │       │
+              ┌────────────┘             │             │       └────────────┐
+              ▼                          ▼             ▼                    ▼
+  ┌────────────────────────┐  ┌──────────────────┐  ┌──────────────┐  ┌──────────────────┐
+  │   Matching Engine      │  │  Fare Splitting  │  │   Routing    │  │  Email & OTP     │
+  │ • Time Window Filter   │  │ • Solo Fare Ref  │  │ • Haversine  │  │ • SMTP HTML Svc  │
+  │ • Pair Detour Scorer   │  │ • Group Total    │  │ • OSRM API   │  │ • 6-Digit Codes  │
+  │ • Group Capacity Check │  │ • Proportional Wt│  │ • Greedy TSP │  │ • Demo Bypass    │
+  └───────────┬────────────┘  └──────────┬───────┘  └──────┬───────┘  └────────┬─────────┘
+              │                          │                 │                   │
+              └──────────────────────────┼─────────────────┴───────────────────┘
+                                         ▼
+                       ┌───────────────────────────────────┐
+                       │        SQLAlchemy 2.0 ORM         │
+                       └─────────────────┬─────────────────┘
+                                         ▼
+                       ┌───────────────────────────────────┐
+                       │       SQLite Database (MVP)       │
+                       │   (PostgreSQL Production Ready)   │
+                       └───────────────────────────────────┘
 ```
 
 ---
@@ -188,7 +192,7 @@ Every day, tens of thousands of travelers disembark from flights and long-distan
 ## 🧮 Algorithms & Mathematical Formulations
 
 ### 1. Great-Circle Distance (Haversine Formula)
-Used for instant, non-blocking $O(1)$ spatial distance calculations during pairing candidate filtering:
+Used for sub-millisecond $O(1)$ pairwise distance filtering without exhausting external routing API limits.
 
 $$\Delta \text{lat} = \text{lat}_2 - \text{lat}_1, \quad \Delta \text{lon} = \text{lon}_2 - \text{lon}_1$$
 
@@ -266,21 +270,22 @@ $$\text{Savings } \% = \max\left(0,\; \text{round}\left(\left(1 - \frac{\text{Fa
 
 ### Backend
 - **Language / Runtime:** Python 3.10+
-- **Web Framework:** [FastAPI](https://fastapi.tiangolo.com/) (Async, OpenAPI auto-docs, Pydantic validation)
+- **Web Framework:** [FastAPI](https://fastapi.tiangolo.com/) (Async endpoints, auto OpenAPI docs, Pydantic validation)
 - **ASGI Server:** [Uvicorn](https://www.uvicorn.org/)
 - **Database ORM:** [SQLAlchemy 2.0](https://www.sqlalchemy.org/)
-- **Authentication:** [python-jose](https://github.com/mpdavis/python-jose) (JWT HS256) + Passlib/Multipart
+- **Authentication:** [python-jose](https://github.com/mpdavis/python-jose) (JWT HS256) + `python-multipart`
+- **Email Verification:** Python standard `smtplib` + `email.mime` with branded HTML templates and console fallback
 - **HTTP Client:** [HTTPX](https://www.python-httpx.org/) (Async requests to OSRM routing server)
-- **Configuration:** [Pydantic-Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)
-- **Testing:** [Pytest](https://docs.pytest.org/)
+- **Configuration:** [Pydantic-Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) + `python-dotenv`
+- **Testing:** [Pytest](https://docs.pytest.org/) + FastAPI `TestClient`
 
 ### Frontend
 - **Framework:** [React 19](https://react.dev/)
 - **Build Tool:** [Vite 6](https://vitejs.dev/)
-- **Routing:** [React Router v7](https://reactrouter.com/)
-- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) (`@tailwindcss/vite`)
-- **Maps:** [Leaflet](https://leafletjs.com/) + [React-Leaflet v5](https://react-leaflet.js.org/) (CartoDB Dark TileLayer)
-- **Typography:** Inter (Google Fonts)
+- **Routing:** [React Router v7](https://reactrouter.com/) (`react-router-dom`)
+- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) (`@tailwindcss/vite`) + Custom Glassmorphic Design System
+- **Maps:** [Leaflet 1.9.4](https://leafletjs.com/) + [React-Leaflet v5](https://react-leaflet.js.org/) (CartoDB Dark TileLayer)
+- **Typography:** Inter (via Google Fonts)
 
 ---
 
@@ -288,58 +293,68 @@ $$\text{Savings } \% = \max\left(0,\; \text{round}\left(\left(1 - \frac{\text{Fa
 
 ```
 c:\prject 3 main\
-├── README.md                          # Comprehensive Workspace Documentation
+├── README.md                          # Workspace Root Documentation
 └── arriveshare/
     ├── README.md                      # Mirrored Documentation
     ├── backend/
-    │   ├── .env                       # Environment configuration
-    │   ├── arriveshare.db             # Local SQLite database
-    │   ├── requirements.txt           # Python dependencies
+    │   ├── .env                       # Environment configuration (DB, JWT, Pricing, OSRM, SMTP)
+    │   ├── arriveshare.db             # Local SQLite database (auto-generated on startup)
+    │   ├── requirements.txt           # Python dependencies (FastAPI, SQLAlchemy, JOSE, etc.)
     │   ├── app/
-    │   │   ├── __init__.py            # Application package
-    │   │   ├── config.py              # Pydantic Settings & env parameters
-    │   │   ├── database.py            # Engine, SessionLocal, and get_db dependency
-    │   │   ├── models.py              # SQLAlchemy models (User, Station, RideRequest, etc.)
-    │   │   ├── schemas.py             # Pydantic request/response schemas
-    │   │   ├── auth.py                # JWT creation, OTP verification, auth dependencies
-    │   │   ├── seed.py                # Seed data: Bangalore stations, users, drivers, rides
-    │   │   ├── main.py                # FastAPI entry point, lifespan hook, CORS
+    │   │   ├── __init__.py            # Application package initializer
+    │   │   ├── config.py              # Pydantic BaseSettings loading .env parameters
+    │   │   ├── database.py            # SQLite engine, SessionLocal, and get_db dependency
+    │   │   ├── models.py              # SQLAlchemy 2.0 ORM models (User, Station, Driver, etc.)
+    │   │   ├── schemas.py             # Pydantic request & response validation schemas
+    │   │   ├── auth.py                # Core auth logic, JWT generation, get_current_user
+    │   │   ├── seed.py                # Database seed data: 4 Bangalore hubs, 30 users, 5 drivers
+    │   │   ├── main.py                # FastAPI entry point, lifespan hook, CORS, router registrations
     │   │   ├── routes/
     │   │   │   ├── __init__.py
-    │   │   │   ├── auth.py            # /api/auth endpoints (register, send/verify OTP, me)
-    │   │   │   ├── stations.py        # /api/stations endpoints
-    │   │   │   ├── rides.py           # /api/rides CRUD, confirm, share-trip
-    │   │   │   ├── matches.py         # /api/matches matching & rematch endpoints
-    │   │   │   ├── groups.py          # /api/groups details & ordered route points
-    │   │   │   └── driver.py          # /api/driver profile, assignments, status lifecycle
+    │   │   │   ├── auth.py            # Auth routes re-export
+    │   │   │   ├── stations.py        # /api/stations endpoints (list & retrieve hubs)
+    │   │   │   ├── rides.py           # /api/rides CRUD, confirm, share-trip, cancel & re-route
+    │   │   │   ├── matches.py         # /api/matches matching & decline/rematch endpoints
+    │   │   │   ├── groups.py          # /api/groups details & OSRM ordered route points
+    │   │   │   └── driver.py          # /api/driver profile, assignments, status lifecycle, toggle
     │   │   └── services/
     │   │       ├── __init__.py
-    │   │       ├── routing.py         # Haversine, calculate_detour, optimize_drop_order, OSRM
+    │   │       ├── routing.py         # Haversine distance, calculate_detour, optimize_drop_order, OSRM
     │   │       ├── fare.py            # calculate_solo_fare, calculate_group_fare, split_fare
-    │   │       └── matching.py        # find_candidates, score_candidate, match_ride
+    │   │       ├── matching.py        # find_candidates, score_candidate, match_ride, decline_and_rematch
+    │   │       └── email.py           # SMTP HTML verification email dispatcher & OTP generator
     │   └── tests/
     │       ├── __init__.py
-    │       └── test_matching.py       # 10 unit tests covering routing, fares, and scenarios A-D
+    │       ├── test_matching.py       # 10 unit tests for routing, fares, and Scenarios A-D
+    │       └── test_api_endpoints.py  # Full integration test suite for REST endpoints & auth
     └── frontend/
-        ├── index.html                 # App shell with Google Fonts & favicon
-        ├── package.json               # Node.js dependencies and build scripts
-        ├── vite.config.js             # Vite config with React, Tailwind, and /api proxy
-        ├── tsconfig.json              # TypeScript / JSX configuration
+        ├── index.html                 # App shell with Google Fonts Inter & Leaflet CSS
+        ├── package.json               # Node.js dependencies (React 19, Vite 6, Tailwind 4, etc.)
+        ├── package-lock.json          # Deterministic dependency lock
+        ├── vite.config.js             # Vite config with React, Tailwind, and /api proxy to :8000
+        ├── tsconfig.json              # TypeScript / JSX compiler configuration
+        ├── public/
+        │   ├── favicon.svg            # ArriveShare taxi branding favicon
+        │   └── icons.svg              # SVG icon sprites
         └── src/
-            ├── main.jsx               # React DOM entry point
-            ├── App.jsx                # Router, AuthProvider, ProtectedRoute definitions
-            ├── index.css              # Tailwind CSS v4, custom theme variables, animations
+            ├── main.jsx               # React DOM mount point
+            ├── App.jsx                # Router, AuthProvider, and ProtectedRoute definitions
+            ├── index.css              # Tailwind CSS v4, custom glassmorphic tokens, animations
+            ├── assets/
+            │   ├── hero.png           # Hero banner asset
+            │   ├── typescript.svg     # SVG asset
+            │   └── vite.svg           # Vite logo asset
             ├── context/
-            │   └── AuthContext.jsx    # React Context for auth state and quick-login helpers
+            │   └── AuthContext.jsx    # React Context for auth state, token storage, demo logins
             ├── services/
-            │   └── api.js             # Centralized fetch client for backend endpoints
+            │   └── api.js             # Centralized fetch client for backend REST endpoints
             └── pages/
-                ├── LoginPage.jsx       # Login, Register, OTP entry, Quick Demo selectors
-                ├── HomePage.jsx        # Dashboard: active rides, station grid, user info
-                ├── RideRequestPage.jsx # Map destination picker, station chooser, solo/share
-                ├── MatchingPage.jsx    # Radar animation, match preview, fare savings, accept/decline
-                ├── TripPage.jsx        # Active trip progress tracker, live map, emergency share
-                └── DriverDashboard.jsx # Driver assignments, stops checklist, earnings, lifecycle
+                ├── LoginPage.jsx      # Login, registration with email OTP, 30s resend, quick demo
+                ├── HomePage.jsx       # Hub cards, active & past rides with status badges
+                ├── RideRequestPage.jsx# Interactive dark map picker, Bangalore chip selectors
+                ├── MatchingPage.jsx   # Radar scanning animation, match discovery card, co-travelers
+                ├── TripPage.jsx       # Real-time status tracker, multi-stop map, emergency trip share
+                └── DriverDashboard.jsx# Vehicle card, availability toggle, earnings, stops checklist
 ```
 
 ---
@@ -384,13 +399,21 @@ c:\prject 3 main\
    MAX_DETOUR_KM=5
    CAB_CAPACITY=4
    OSRM_BASE_URL=https://router.project-osrm.org
+   SMTP_ENABLED=false
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=587
+   SMTP_USERNAME=
+   SMTP_PASSWORD=
+   SMTP_FROM_EMAIL=no-reply@arriveshare.com
+   SMTP_FROM_NAME=ArriveShare
+   SMTP_USE_TLS=true
    ```
 
 5. Launch the backend server:
    ```powershell
    uvicorn app.main:app --reload --port 8000
    ```
-   > 💡 **Auto-Seeding:** On startup, FastAPI's `lifespan` handler automatically initializes the SQLite schema and runs `seed_all()` to populate the stations, 30 passengers, 5 drivers, and test ride requests.
+   > 💡 **Auto-Seeding:** On startup, FastAPI's `lifespan` handler automatically initializes the SQLite schema and runs `seed_all()` to populate the 4 Bangalore stations, 30 passengers, 5 drivers, and test ride requests.
 
 6. Verify the backend is operational:
    - Health check: `http://localhost:8000/api/health`
@@ -425,10 +448,12 @@ c:\prject 3 main\
 
 ## ⚙️ Configuration (.env)
 
+All settings are strongly typed and validated through Pydantic (`app/config.py`):
+
 | Variable | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `DATABASE_URL` | String | `sqlite:///./arriveshare.db` | Database connection string. Swap to `postgresql://...` for production. |
-| `SECRET_KEY` | String | `arriveshare-dev-secret-key...` | Cryptographic secret for signing JWT tokens. |
+| `SECRET_KEY` | String | `arriveshare-dev-secret-key...` | Cryptographic secret for signing JWT HS256 tokens. |
 | `ALGORITHM` | String | `HS256` | JWT signature algorithm. |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | Integer | `60` | JWT expiration duration in minutes. |
 | `BASE_FARE` | Float | `50.0` | Initial flat base charge (INR) applied once per vehicle. |
@@ -438,6 +463,14 @@ c:\prject 3 main\
 | `MAX_DETOUR_KM` | Float | `5.0` | Hard upper limit on detour added to any single passenger's solo route. |
 | `CAB_CAPACITY` | Integer | `4` | Maximum passenger seats per vehicle. |
 | `OSRM_BASE_URL` | String | `https://router.project-osrm.org` | Open Source Routing Machine endpoint for driving distance matrices. |
+| `SMTP_ENABLED` | Boolean | `false` | Enable live SMTP email dispatch for verification codes. |
+| `SMTP_HOST` | String | `smtp.gmail.com` | SMTP host server address. |
+| `SMTP_PORT` | Integer | `587` | SMTP port (587 for STARTTLS, 465 for SSL). |
+| `SMTP_USERNAME` | String | `""` | SMTP authentication username / account email. |
+| `SMTP_PASSWORD` | String | `""` | SMTP authentication app password. |
+| `SMTP_FROM_EMAIL` | String | `no-reply@arriveshare.com` | Sender email address appearing in verification messages. |
+| `SMTP_FROM_NAME` | String | `ArriveShare` | Sender display name. |
+| `SMTP_USE_TLS` | Boolean | `true` | Enable STARTTLS connection encryption. |
 
 ---
 
@@ -447,9 +480,9 @@ All requests requiring authentication expect the HTTP header:
 `Authorization: Bearer <token>`
 
 ### Authentication (`/api/auth`)
-- `POST /api/auth/register` — Register a new user (`name`, `email`, `phone`, `role`).
-- `POST /api/auth/send-otp` — Request login OTP (`{"email": "..."}`). *(In dev mode, OTP is always `1234`)*.
-- `POST /api/auth/verify-otp` — Verify OTP and receive JWT access token.
+- `POST /api/auth/register` — Register a new user (`name`, `email`, `phone`, `role`). Generates 6-digit OTP and dispatches verification email (or logs to console in dev mode).
+- `POST /api/auth/send-otp` — Request login OTP (`{"email": "..."}`). Pre-seeded demo users use instant OTP `1234`; new users receive a secure 6-digit email OTP.
+- `POST /api/auth/verify-otp` — Verify OTP and receive JWT access token (`access_token`, `token_type: "bearer"`).
 - `GET /api/auth/me` — Retrieve profile of the currently logged-in user.
 
 ### Stations (`/api/stations`)
@@ -457,27 +490,27 @@ All requests requiring authentication expect the HTTP header:
 - `GET /api/stations/{station_id}` — Get details for a specific station.
 
 ### Rides (`/api/rides`)
-- `POST /api/rides` — Submit a ride request (`station_id`, `dest_lat`, `dest_lng`, `dest_name`, `arrival_time`, `flight_train_number`, `ride_type`).
+- `POST /api/rides` — Submit a ride request (`station_id`, `dest_lat`, `dest_lng`, `dest_name`, `arrival_time`, `flight_train_number`, `ride_type`, `luggage_count`). Computes instant baseline solo fare.
 - `GET /api/rides/my` — List all ride requests submitted by the logged-in user.
 - `GET /api/rides/{ride_id}` — Get complete details for a specific ride.
-- `POST /api/rides/{ride_id}/confirm` — Confirm and accept a matched or booked ride.
 - `PATCH /api/rides/{ride_id}/status` — Update ride status (`pending`, `matched`, `confirmed`, `on_trip`, `completed`, `cancelled`).
+- `POST /api/rides/{ride_id}/confirm` — Confirm and accept a matched or booked ride.
 - `POST /api/rides/{ride_id}/share-trip` — Record emergency trip sharing with contact (`contact_name`, `contact_phone`).
 - `POST /api/rides/{ride_id}/cancel` — Cancel a ride request, recalculate group route and fares, or dissolve group if fewer than 2 passengers remain.
 
-### Matching (`/api/matches`)
+### Matching Engine (`/api/matches`)
 - `POST /api/matches/find/{ride_id}` — Run the matching engine on a pending shared ride request. Returns matched group, co-travelers, drop-off sequence, and savings percentage.
 - `POST /api/matches/decline/{ride_id}` — Decline the current match. Dissolves or recalculates the remaining group and puts the rider back into the candidate pool.
 
 ### Ride Groups (`/api/groups`)
 - `GET /api/groups/{group_id}` — Retrieve full group information, passenger roster, driver details, and group totals.
-- `GET /api/groups/{group_id}/route` — Retrieve ordered waypoints (pickup station + sequential drop-offs) formatted for map rendering.
+- `GET /api/groups/{group_id}/route` — Retrieve ordered waypoints (pickup station + sequential drop-offs) formatted with OSRM polyline road coordinates for map rendering.
 
 ### Driver Operations (`/api/driver`)
 - `GET /api/driver/profile` — Retrieve logged-in driver's profile and vehicle details.
 - `GET /api/driver/assignments` — List all ride groups assigned to this driver.
 - `GET /api/driver/assignments/{group_id}` — Get specific trip details, passenger names, stops checklist, and total earnings.
-- `PATCH /api/driver/assignments/{group_id}/status` — Progress trip status (`forming` $\rightarrow$ `confirmed` $\rightarrow$ `on_trip` $\rightarrow$ `completed`).
+- `PATCH /api/driver/assignments/{group_id}/status` — Progress trip status (`forming` $\rightarrow$ `confirmed` $\rightarrow$ `on_trip` $\rightarrow$ `completed`). Automatically frees the driver upon completion.
 - `POST /api/driver/toggle-availability` — Toggle driver availability between online and off-duty.
 
 ---
@@ -568,7 +601,7 @@ erDiagram
 
 ---
 
-## 🧪 Pre-Seeded Scenarios & Unit Testing
+## 🧪 Pre-Seeded Scenarios & Automated Testing
 
 ### Seeded Real-World Scenarios
 
@@ -592,24 +625,22 @@ The backend seed script (`app/seed.py`) establishes real-world edge cases for de
 
 ---
 
-### Running the Test Suite
+### Test Suite 1: Matching & Pricing Unit Tests
 
-A comprehensive test suite is provided in `backend/tests/test_matching.py`.
-
-To run the unit tests directly:
+Located at `backend/tests/test_matching.py`. Evaluates the mathematical core:
+- Haversine distance accuracy
+- Same-destination zero-detour validation
+- Corridor overlap detour scoring
+- Nearest-neighbor multi-stop greedy sequencing
+- Proportional fare splitting
+- Scenarios A, B, C, and D capacity limits
 
 ```powershell
 cd "c:\prject 3 main\arriveshare\backend"
 python tests/test_matching.py
 ```
 
-Or using `pytest`:
-
-```powershell
-pytest -v tests/test_matching.py
-```
-
-#### Test Suite Output
+#### Output:
 ```text
 ============================================================
   ArriveShare -- Unit Tests
@@ -672,12 +703,62 @@ pytest -v tests/test_matching.py
 
 ---
 
+### Test Suite 2: API End-to-End Integration Tests
+
+Located at `backend/tests/test_api_endpoints.py`. Validates all FastAPI REST endpoints using `TestClient`:
+- Stations listing endpoint
+- Authentication flows: demo login bypass, new user registration, and 6-digit email OTP verification
+- Ride creation and instant solo fare estimation
+- Dynamic corridor matching with savings percentage
+- Trip safety sharing with trusted emergency contact
+- OSRM multi-stop road geometry polyline retrieval
+- Driver lifecycle: availability toggle, detailed group assignment, status stepping (`forming` $\rightarrow$ `on_trip` $\rightarrow$ `completed`)
+- Ride cancellation, group re-routing, and fare redistribution
+
+```powershell
+cd "c:\prject 3 main\arriveshare\backend"
+python tests/test_api_endpoints.py
+```
+
+#### Output:
+```text
+============================================================
+  ArriveShare -- API Integration Tests
+============================================================
+
+  ✓ /api/stations returned stations: ['Kempegowda Intl Airport (BLR)', 'HAL Airport', 'Bangalore City Railway Station', 'Yeshwanthpur Railway Station']
+  ✓ Passenger login & /api/auth/me verified for: Aarav Sharma
+  ✓ Driver login verified for: Rajesh Kumar
+
+[EMAIL SERVICE] ===========================================================
+[EMAIL SERVICE] Verification Code for New Traveler <newuser_flow_test@example.com>: 250664
+[EMAIL SERVICE] ===========================================================
+
+  ✓ Real user email verification with 6-digit OTP verified successfully
+  ✓ Ride 1 created with ID: 47
+  ✓ Ride 2 created with ID: 48
+  ✓ Matched Group #4: Solo ₹440.69 -> Shared ₹235.92 (46.5% savings)
+  ✓ Safety feature: Trip details shared with trusted emergency contacts
+  ✓ Group route returned 5 stops with 29 road coordinate points
+  ✓ Driver toggled availability: True
+  ✓ Driver assignment detail verified for group #4 (4 passengers)
+  ✓ Driver transitioned group status to: on_trip
+  ✓ Driver transitioned group status to: completed
+  ✓ Ride #47 successfully cancelled
+
+============================================================
+  All API Integration Tests Passed Successfully! ✓
+============================================================
+```
+
+---
+
 ## 📱 Frontend User Flows & UI Walkthrough
 
 ### 1. Authentication & Demo Mode (`/login`)
-- Log in with email and OTP (`1234` dev mock).
-- Registration tab for new passengers.
-- **Quick Demo Login:** One-click shortcuts for `Passenger 1`, `Passenger 2`, `Passenger 3`, and `Driver View`.
+- Log in with email and OTP (`1234` dev mock for demo accounts).
+- Registration tab with email OTP verification and a 30-second resend cooldown timer.
+- **Quick Demo Login:** One-click shortcuts for `Passenger 1 (Aarav)`, `Passenger 2 (Diya)`, `Passenger 3 (Rohan)`, and `Driver View (Rajesh)`.
 
 ### 2. Passenger Home Dashboard (`/`)
 - Personalized welcome banner.
@@ -687,14 +768,14 @@ pytest -v tests/test_matching.py
 
 ### 3. Ride Booking & Destination Picker (`/ride/new`)
 - Select arrival station.
-- Interactive Leaflet dark-mode map: click anywhere in the city or pick from Bangalore neighborhood pills (*Koramangala, Indiranagar, Whitefield, Electronic City, etc.*).
+- Interactive Leaflet dark-mode map: click anywhere in the city or pick from Bangalore neighborhood chips (*Koramangala, Indiranagar, Whitefield, Electronic City, MG Road, HSR Layout, etc.*).
 - Input flight or train arrival number (e.g., `6E-2451`, `12657 Exp`).
-- Toggle between **Share & Save** and **Book Solo**.
+- Specify luggage count and toggle between **Share & Save** and **Book Solo**.
 
 ### 4. Radar Matching Screen (`/ride/:rideId/matching`)
 - Animated pulsing radar visualizing nearby traveler discovery.
 - Match results card displaying:
-  - Total percentage saved (e.g., *"You save 54%!"*).
+  - Total percentage saved (e.g., *"You save 46.5%!"*).
   - Side-by-side Solo vs. Shared fare comparison.
   - Anonymized co-traveler list (*First name, verification badge, destination, drop order*).
   - Sequenced drop-off route timeline with total kilometers.
