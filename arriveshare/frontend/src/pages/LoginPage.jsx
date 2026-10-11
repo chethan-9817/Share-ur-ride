@@ -159,9 +159,10 @@ export default function LoginPage() {
 
         {mode === 'login' && (
           <form onSubmit={handleSendOtp}>
-            <h2 className="text-xl font-semibold mb-6">Welcome back</h2>
+            <h2 className="text-xl font-semibold mb-2">Welcome to ArriveShare</h2>
+            <p className="text-text-muted text-xs mb-6">Enter any email address to sign in or get started</p>
             <div className="mb-4">
-              <label className="block text-text-secondary text-sm mb-2">Email</label>
+              <label className="block text-text-secondary text-sm mb-2">Email Address</label>
               <input
                 type="email"
                 value={email}
@@ -174,14 +175,14 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white font-semibold hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white font-semibold hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-[0.98] disabled:opacity-50"
             >
-              {loading ? 'Sending OTP...' : 'Send OTP'}
+              {loading ? 'Sending Code...' : 'Continue with Email'}
             </button>
-            <p className="text-center text-text-muted text-sm mt-4">
-              New here?{' '}
-              <button type="button" onClick={() => setMode('register')} className="text-primary-light hover:underline">
-                Create account
+            <p className="text-center text-text-muted text-xs mt-4">
+              Need custom passenger details?{' '}
+              <button type="button" onClick={() => setMode('register')} className="text-primary-light hover:underline font-medium">
+                Set name & phone
               </button>
             </p>
           </form>
@@ -237,21 +238,34 @@ export default function LoginPage() {
               <h2 className="text-xl font-semibold">Enter Verification Code</h2>
               <button
                 type="button"
-                onClick={() => { setMode('login'); setOtp(''); }}
+                onClick={() => { setMode('login'); setOtp(''); setDevOtp(''); }}
                 className="text-xs text-text-muted hover:text-text-primary transition-colors"
               >
                 Change email
               </button>
             </div>
-            <p className="text-text-secondary text-sm mb-6">
+            <p className="text-text-secondary text-sm mb-4">
               We sent a code to <span className="text-primary-light font-medium">{email}</span>
               <br />
               <span className="text-text-muted text-xs">
                 {isDemoEmail
                   ? '(Demo account: use 1234)'
-                  : otpHint || 'Check your inbox for your 6-digit verification code.'}
+                  : otpHint || 'Check below or your inbox for your 6-digit verification code.'}
               </span>
             </p>
+
+            {devOtp && (
+              <div className="mb-4 p-3 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-between text-xs text-accent">
+                <span>Code: <strong className="font-mono text-base tracking-wider font-bold text-accent">{devOtp}</strong></span>
+                <button
+                  type="button"
+                  onClick={() => setOtp(devOtp)}
+                  className="px-3 py-1 rounded-xl bg-accent/20 hover:bg-accent/30 font-semibold text-xs transition-colors"
+                >
+                  Auto-fill ✓
+                </button>
+              </div>
+            )}
             <input
               type="text"
               value={otp}
