@@ -120,7 +120,10 @@ def send_otp(data: OTPRequest, db: Session = Depends(get_db)):
         otp = generate_otp(6)
         user.otp_code = otp
         send_verification_email(user.email, user.name, otp)
-        hint = "Verification code sent to your email"
+        if settings.SMTP_ENABLED and settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
+            hint = "Verification code sent to your email"
+        else:
+            hint = f"Dev mode (SMTP unconfigured): Your code is {otp}"
 
     db.commit()
     return {
