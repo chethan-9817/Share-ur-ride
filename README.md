@@ -193,6 +193,7 @@ $$\Delta \text{lat} = \text{lat}_2 - \text{lat}_1, \quad \Delta \text{lon} = \te
 $$a = \sin^2\left(\frac{\Delta \text{lat}}{2}\right) + \cos(\text{lat}_1) \cdot \cos(\text{lat}_2) \cdot \sin^2\left(\frac{\Delta \text{lon}}{2}\right)$$
 
 $$c = 2 \cdot \arcsin\left(\sqrt{a}\right)$$
+$$d = R \cdot c \quad \text{where } R = 6371.0 \text{ km (Earth Radius)}$$
 
 
 
