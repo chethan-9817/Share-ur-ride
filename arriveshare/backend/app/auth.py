@@ -107,15 +107,28 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/send-otp")
 def send_otp(data: OTPRequest, db: Session = Depends(get_db)):
-    """Send OTP to user: mock OTP for demo users, real email for new users."""
-    user = db.query(User).filter(User.email == data.email).first()
+    """Send OTP to user: auto-creates user if not exists so ANY email address works seamlessly."""
+    email_clean = data.email.strip().lower()
+    user = db.query(User).filter(User.email.ilike(email_clean)).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        # Auto-create user account so ANY email address can sign in immediately
+        prefix = email_clean.split("@")[0].replace(".", " ").replace("_", " ").title()
+        user = User(
+            name=prefix if prefix else "Traveler",
+            email=email_clean,
+            role="passenger",
+            verified=False,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
     is_demo = is_demo_email(user.email)
+    dev_otp = None
     if is_demo:
         user.otp_code = MOCK_OTP
         hint = "Use 1234 in dev mode (Demo account)"
+        dev_otp = "1234"
     else:
         otp = generate_otp(6)
         user.otp_code = otp
@@ -123,20 +136,23 @@ def send_otp(data: OTPRequest, db: Session = Depends(get_db)):
         if settings.SMTP_ENABLED and settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
             hint = "Verification code sent to your email"
         else:
-            hint = f"Dev mode (SMTP unconfigured): Your code is {otp}"
+            hint = f"Verification code: {otp}"
+            dev_otp = otp
 
     db.commit()
     return {
         "message": f"OTP sent to {data.email}",
         "hint": hint,
         "is_demo": is_demo,
+        "dev_otp": dev_otp,
     }
 
 
 @router.post("/verify-otp", response_model=Token)
 def verify_otp(data: OTPVerify, db: Session = Depends(get_db)):
     """Verify OTP and return a JWT access token."""
-    user = db.query(User).filter(User.email == data.email).first()
+    email_clean = data.email.strip().lower()
+    user = db.query(User).filter(User.email.ilike(email_clean)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 

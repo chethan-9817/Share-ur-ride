@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [otpHint, setOtpHint] = useState('');
+  const [devOtp, setDevOtp] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const { login, demoLogin, demoDriverLogin } = useAuth();
   const navigate = useNavigate();
@@ -39,6 +40,10 @@ export default function LoginPage() {
       await authApi.register({ name, email, phone, role: 'passenger' });
       const res = await authApi.sendOtp(email);
       setOtpHint(res.hint || '');
+      if (res.dev_otp) {
+        setDevOtp(res.dev_otp);
+        setOtp(res.dev_otp);
+      }
       startResendTimer();
       setMode('otp');
     } catch (err) {
@@ -55,6 +60,10 @@ export default function LoginPage() {
     try {
       const res = await authApi.sendOtp(email);
       setOtpHint(res.hint || '');
+      if (res.dev_otp) {
+        setDevOtp(res.dev_otp);
+        setOtp(res.dev_otp);
+      }
       startResendTimer();
       setMode('otp');
     } catch (err) {
@@ -71,6 +80,10 @@ export default function LoginPage() {
     try {
       const res = await authApi.sendOtp(email);
       setOtpHint(res.hint || '');
+      if (res.dev_otp) {
+        setDevOtp(res.dev_otp);
+        setOtp(res.dev_otp);
+      }
       startResendTimer();
     } catch (err) {
       setError(err.message);
