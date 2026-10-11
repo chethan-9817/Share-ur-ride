@@ -524,7 +524,8 @@ python -m pytest tests/ -v
    - 1-click **Share Trip with Family** and **Emergency SOS** triggers.
 6. **Driver Dashboard (`/driver`)**:
    - Online/Offline availability toggle.
-   - 
+   - Total earnings and completed trips tracker.
+
 
 
 
