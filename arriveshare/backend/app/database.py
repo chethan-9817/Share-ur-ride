@@ -73,3 +73,10 @@ def ensure_schema_migrations(eng=engine):
 
         conn.commit()
 
+
+try:
+    ensure_schema_migrations(engine)
+except Exception:
+    pass
+
+
