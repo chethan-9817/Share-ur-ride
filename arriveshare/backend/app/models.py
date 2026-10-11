@@ -53,10 +53,13 @@ class RideGroup(Base):
     id = Column(Integer, primary_key=True, index=True)
     station_id = Column(Integer, ForeignKey("stations.id"), nullable=False)
     driver_id = Column(Integer, ForeignKey("drivers.id"), nullable=True)
-    status = Column(String, default="forming")        # forming | confirmed | on_trip | completed
+    status = Column(String, default="forming")        # forming | accepting | confirmed | on_trip | completed | cancelled
     total_distance_km = Column(Float, nullable=True)
     total_fare = Column(Float, nullable=True)
+    platform_subsidy = Column(Float, default=0.0)
     capacity = Column(Integer, default=4)
+    accept_expires_at = Column(DateTime, nullable=True)
+    version = Column(Integer, default=1)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     station = relationship("Station", back_populates="ride_groups")
@@ -67,7 +70,7 @@ class RideGroup(Base):
 class RideRequest(Base):
     """
     A single passenger's ride request.
-    Stores destination, fares (solo vs shared), and the drop-off order
+    Stores destination, fares (solo vs shared), price guarantee, and drop-off order
     within a matched group.
     """
     __tablename__ = "ride_requests"
@@ -80,13 +83,18 @@ class RideRequest(Base):
     dest_name = Column(String, nullable=False)
     arrival_time = Column(DateTime, nullable=False)
     flight_train_number = Column(String, nullable=True)
+    match_window_minutes = Column(Integer, default=20) # flexible arrival tolerance (10/15/20)
     ride_type = Column(String, default="shared")      # solo | shared
     status = Column(String, default="pending")         # pending | matched | confirmed | on_trip | completed | cancelled
     group_id = Column(Integer, ForeignKey("ride_groups.id"), nullable=True)
     solo_fare = Column(Float, nullable=True)
     shared_fare = Column(Float, nullable=True)
+    accepted_fare = Column(Float, nullable=True)      # Price guarantee locked fare
+    platform_subsidy = Column(Float, default=0.0)     # Absorbed fare difference
     savings_pct = Column(Float, nullable=True)
     drop_order = Column(Integer, nullable=True)        # 1-based order in the group route
+    accept_expires_at = Column(DateTime, nullable=True)
+    version = Column(Integer, default=1)              # Optimistic concurrency version
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="ride_requests")
