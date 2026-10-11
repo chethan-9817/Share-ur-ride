@@ -100,7 +100,7 @@ class RideRequest(Base):
     user = relationship("User", back_populates="ride_requests")
     station = relationship("Station", back_populates="ride_requests")
     group = relationship("RideGroup", back_populates="ride_requests")
-    trip_shares = relationship("TripShare", back_populates="ride_request")
+    trip_shares = relationship("TripShare", back_populates="ride_request", cascade="all, delete-orphan")
 
 
 class Driver(Base):
