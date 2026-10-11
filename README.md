@@ -522,6 +522,10 @@ python -m pytest tests/ -v
    - Live multi-stop route polyline.
    - - Driver vehicle and contact card.
    - 1-click **Share Trip with Family** and **Emergency SOS** triggers.
+6. **Driver Dashboard (`/driver`)**:
+   - Online/Offline availability toggle.
+   - 
+
 
 
 ---
