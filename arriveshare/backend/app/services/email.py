@@ -127,9 +127,9 @@ def send_verification_email(
         True if email was dispatched or logged in dev mode.
     """
     # Always log the code to backend stdout for developer visibility
-    print(f"\n[EMAIL SERVICE] ═══════════════════════════════════════════════════")
+    print("\n[EMAIL SERVICE] ===========================================================")
     print(f"[EMAIL SERVICE] Verification Code for {recipient_name} <{to_email}>: {otp_code}")
-    print(f"[EMAIL SERVICE] ═══════════════════════════════════════════════════\n")
+    print("[EMAIL SERVICE] ===========================================================\n")
 
     if not settings.SMTP_ENABLED or not settings.SMTP_USERNAME or not settings.SMTP_PASSWORD:
         logger.info(

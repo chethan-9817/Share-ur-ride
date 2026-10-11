@@ -68,6 +68,51 @@ def test_auth_flows():
     assert driver_resp.json()["role"] == "driver"
     print("  ✓ Driver login verified for:", driver_resp.json()["name"])
 
+    # Register real new user — generates 6-digit email OTP while keeping demo users on 1234
+    from app.database import SessionLocal
+    from app.models import User
+    new_email = "newuser_flow_test@example.com"
+    # Ensure cleanup if leftover exists
+    db = SessionLocal()
+    try:
+        existing = db.query(User).filter(User.email == new_email).first()
+        if existing:
+            db.delete(existing)
+            db.commit()
+    finally:
+        db.close()
+
+    reg_resp = client.post("/api/auth/register", json={
+        "name": "New Traveler",
+        "email": new_email,
+        "phone": "+919988776655",
+        "role": "passenger",
+    })
+    assert reg_resp.status_code == 200
+
+    db = SessionLocal()
+    try:
+        user_in_db = db.query(User).filter(User.email == new_email).first()
+        assert user_in_db is not None
+        assert len(user_in_db.otp_code) == 6, f"Expected 6-digit OTP, got {user_in_db.otp_code}"
+        otp_code = user_in_db.otp_code
+
+        # Attempt with wrong OTP fails
+        fail_resp = client.post("/api/auth/verify-otp", json={"email": new_email, "otp": "000000"})
+        assert fail_resp.status_code == 400
+
+        # Attempt with generated OTP succeeds
+        verify_resp = client.post("/api/auth/verify-otp", json={"email": new_email, "otp": otp_code})
+        assert verify_resp.status_code == 200
+        assert "access_token" in verify_resp.json()
+        print("  ✓ Real user email verification with 6-digit OTP verified successfully")
+
+        # Cleanup test user
+        db.delete(user_in_db)
+        db.commit()
+    finally:
+        db.close()
+
 
 def test_ride_lifecycle_and_matching():
     """Verify end-to-end flow: ride creation, matching, trip sharing, and driver updates."""
