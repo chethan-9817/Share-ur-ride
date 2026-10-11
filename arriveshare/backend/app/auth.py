@@ -5,6 +5,7 @@ Simple JWT auth with mock OTP verification.
 In dev mode, OTP is always "1234".
 """
 
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -113,9 +114,11 @@ def send_otp(data: OTPRequest, db: Session = Depends(get_db)):
     if not user:
         # Auto-create user account so ANY email address can sign in immediately
         prefix = email_clean.split("@")[0].replace(".", " ").replace("_", " ").title()
+        random_phone = f"+91{secrets.randbelow(9000000000) + 1000000000}"
         user = User(
             name=prefix if prefix else "Traveler",
             email=email_clean,
+            phone=random_phone,
             role="passenger",
             verified=False,
         )
