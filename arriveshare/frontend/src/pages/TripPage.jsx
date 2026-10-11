@@ -425,6 +425,20 @@ export default function TripPage() {
                     💰 Saving {ride.savings_pct}%
                   </span>
                 </div>
+                {ride.accepted_fare && (
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between text-xs">
+                    <span className="text-primary-light font-medium flex items-center gap-1.5">
+                      <span>🔒</span> Price Guarantee Locked
+                    </span>
+                    <span className="text-text-primary font-bold">Max ₹{ride.accepted_fare.toFixed(0)}</span>
+                  </div>
+                )}
+                {ride.platform_subsidy > 0 && (
+                  <div className="mt-1.5 p-2 rounded-xl bg-success/10 border border-success/20 flex items-center justify-between text-xs text-success font-medium">
+                    <span>🛡️ Platform Subsidy:</span>
+                    <span>+₹{ride.platform_subsidy.toFixed(0)} covered</span>
+                  </div>
+                )}
               </>
             )}
           </div>
