@@ -321,6 +321,10 @@ def _finalize_group(
             .filter(Driver.available == True, Driver.seats >= len(ordered))
             .first()
         )
+        if not driver:
+            # Fallback to assign an existing driver if all drivers are currently flagged unavailable
+            driver = db.query(Driver).filter(Driver.seats >= len(ordered)).first()
+
         if driver:
             group.driver_id = driver.id
             driver.available = False

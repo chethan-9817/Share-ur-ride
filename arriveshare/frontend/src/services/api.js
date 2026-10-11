@@ -45,6 +45,7 @@ export const rides = {
   create: (data) => request('/rides', { method: 'POST', body: JSON.stringify(data) }),
   my: () => request('/rides/my'),
   get: (id) => request(`/rides/${id}`),
+  update: (id, data) => request(`/rides/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   confirm: (id) => request(`/rides/${id}/confirm`, { method: 'POST' }),
   cancel: (id) => request(`/rides/${id}/cancel`, { method: 'POST' }),
   updateStatus: (id, status) => request(`/rides/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
@@ -54,7 +55,13 @@ export const rides = {
 // ── Matching ────────────────────────────────
 export const matches = {
   find: (rideId) => request(`/matches/find/${rideId}`, { method: 'POST' }),
+  status: (rideId) => request(`/matches/status/${rideId}`),
   decline: (rideId) => request(`/matches/decline/${rideId}`, { method: 'POST' }),
+};
+
+// ── Config ──────────────────────────────────
+export const appConfig = {
+  get: () => request('/config'),
 };
 
 // ── Groups ──────────────────────────────────

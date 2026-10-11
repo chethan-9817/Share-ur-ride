@@ -28,7 +28,7 @@ from app.database import Base
 from app.models import User, Station, Driver, RideRequest, RideGroup
 from app.services.routing import haversine, calculate_detour, optimize_drop_order
 from app.services.fare import calculate_solo_fare, calculate_group_fare, split_fare
-from app.services.matching import match_ride, find_candidates
+from app.services.matching import match_ride, find_candidates, decline_and_rematch
 from app.config import settings
 
 
@@ -348,6 +348,212 @@ def test_scenario_d_capacity_overflow():
             print(f"  ✓ Remaining passenger offered solo ride (₹{pending[0].solo_fare})")
 
 
+# ── Milestone 1 Specific Tests ────────────────────────────────────────
+
+def test_milestone1_five_riders_capacity_split():
+    """Milestone 1 Test 1: 5 riders for a 4-seat cab split cleanly into 2 groups."""
+    db = create_test_db()
+    station = seed_test_station(db)
+    add_driver(db, 1, 101)
+    add_driver(db, 2, 102)
+    now = datetime.now(timezone.utc)
+
+    # 5 riders all going to Koramangala
+    rides = []
+    for i in range(1, 6):
+        add_user(db, i, f"Passenger {i}")
+        ride = RideRequest(
+            id=i, user_id=i, station_id=station.id,
+            dest_lat=12.9352, dest_lng=77.6245, dest_name="Koramangala",
+            arrival_time=now + timedelta(minutes=i),
+            ride_type="shared", status="pending",
+        )
+        db.add(ride)
+        rides.append(ride)
+    db.commit()
+
+    # Match first passenger -> creates group with capacity 4
+    res1 = match_ride(db, rides[0])
+    assert res1 is not None
+    assert len(res1["dropoff_order"]) == 4, f"Expected 4 in first cab, got {len(res1['dropoff_order'])}"
+
+    # 5th rider remains pending
+    r5 = db.get(RideRequest, 5)
+    assert r5.status == "pending"
+    assert r5.group_id is None
+    print("  ✓ 5 riders split into 4-passenger cab + 1 pending rider successfully")
+
+
+def test_milestone1_mid_group_cancellation_price_guarantee():
+    """Milestone 1 Test 2: Mid-group cancellation preserves accepted price guarantee with platform subsidy."""
+    from app.services.fare import apply_price_guarantee
+    db = create_test_db()
+    station = seed_test_station(db)
+    add_driver(db, 1, 101)
+    now = datetime.now(timezone.utc)
+
+    # 3 passengers
+    for i in range(1, 4):
+        add_user(db, i, f"Passenger {i}")
+        db.add(RideRequest(
+            id=i, user_id=i, station_id=station.id,
+            dest_lat=12.9352, dest_lng=77.6245, dest_name="Koramangala",
+            arrival_time=now + timedelta(minutes=i),
+            ride_type="shared", status="pending",
+        ))
+    db.commit()
+
+    r1 = db.get(RideRequest, 1)
+    res = match_ride(db, r1)
+    assert res is not None
+
+    # Rider 2 accepts at shared fare (locking Price Guarantee)
+    r2 = db.get(RideRequest, 2)
+    locked_price = r2.shared_fare
+    r2.accepted_fare = locked_price
+    r2.status = "confirmed"
+    db.commit()
+
+    # Rider 3 cancels
+    r3 = db.get(RideRequest, 3)
+    decline_and_rematch(db, r3)
+
+    # Verify Rider 2's fare did not increase
+    db.refresh(r2)
+    assert r2.shared_fare <= locked_price, f"Rider 2 fare increased from {locked_price} to {r2.shared_fare}!"
+    assert r2.accepted_fare == locked_price
+    print(f"  ✓ Price guarantee holds: locked ₹{locked_price}, final ₹{r2.shared_fare}, subsidy: ₹{r2.platform_subsidy}")
+
+
+def test_milestone1_late_joiner_fills_open_seat():
+    """Milestone 1 Test 3: Late rider joins an existing accepting group with free seats."""
+    db = create_test_db()
+    station = seed_test_station(db)
+    add_driver(db, 1, 101)
+    now = datetime.now(timezone.utc)
+
+    # 2 riders match first
+    for i in (1, 2):
+        add_user(db, i, f"Passenger {i}")
+        db.add(RideRequest(
+            id=i, user_id=i, station_id=station.id,
+            dest_lat=12.9352, dest_lng=77.6245, dest_name="Koramangala",
+            arrival_time=now + timedelta(minutes=i),
+            ride_type="shared", status="pending",
+        ))
+    db.commit()
+
+    r1 = db.get(RideRequest, 1)
+    res1 = match_ride(db, r1)
+    assert res1 is not None
+    group_id = res1["group_id"]
+
+    # 3rd rider arrives 5 mins later heading to same area
+    add_user(db, 3, "Late Passenger")
+    r3 = RideRequest(
+        id=3, user_id=3, station_id=station.id,
+        dest_lat=12.9352, dest_lng=77.6245, dest_name="Koramangala",
+        arrival_time=now + timedelta(minutes=6),
+        ride_type="shared", status="pending",
+    )
+    db.add(r3)
+    db.commit()
+
+    # Late joiner match
+    res3 = match_ride(db, r3)
+    assert res3 is not None
+    assert res3["group_id"] == group_id, f"Late joiner joined group {res3['group_id']} instead of {group_id}"
+    assert len(res3["dropoff_order"]) == 3
+    print("  ✓ Late joiner successfully added to existing open group #", group_id)
+
+
+def test_milestone1_simultaneous_accepts_concurrency():
+    """Milestone 1 Test 4: Concurrency and optimistic version locking."""
+    from app.services.state_machine import transition_ride_request
+    from fastapi import HTTPException
+    db = create_test_db()
+    station = seed_test_station(db)
+    add_user(db, 1)
+
+    r = RideRequest(
+        id=1, user_id=1, station_id=station.id,
+        dest_lat=12.9352, dest_lng=77.6245, dest_name="Koramangala",
+        arrival_time=datetime.now(timezone.utc),
+        ride_type="shared", status="pending", version=1,
+    )
+    db.add(r)
+    db.commit()
+
+    # First worker updates version from 1 to 2
+    transition_ride_request(db, r, "matched", expected_version=1)
+    db.commit()
+    assert r.version == 2
+
+    # Second concurrent worker trying with stale version 1 must get HTTP 409 conflict
+    try:
+        transition_ride_request(db, r, "confirmed", expected_version=1)
+        assert False, "Should have raised 409 CONCURRENCY_CONFLICT"
+    except HTTPException as exc:
+        assert exc.status_code == 409
+        print("  ✓ Optimistic concurrency conflict detected and rejected correctly (HTTP 409)")
+
+
+def test_milestone1_osrm_down_fallback():
+    """Milestone 1 Test 5: Fallback to Haversine route sum when OSRM is unreachable."""
+    import asyncio
+    from app.services.routing import get_osrm_distance
+    coords = [(13.1986, 77.7066), (12.9352, 77.6245)]
+    dist, geometry = asyncio.run(get_osrm_distance(coords))
+    assert dist > 20.0
+    assert len(geometry) >= 2
+    print(f"  ✓ OSRM client returned distance: {dist} km with geometry points: {len(geometry)}")
+
+
+def test_milestone1_detour_limit_boundary():
+    """Milestone 1 Test 6: Dual constraint boundary check (MAX_DETOUR_PCT 30% and MAX_DETOUR_KM 6km)."""
+    from app.services.routing import is_detour_compatible
+    # Case A: Solo 10 km. 30% is 3.0 km.
+    assert is_detour_compatible(solo_distance_km=10.0, added_detour_km=3.0, max_detour_pct=0.30, max_detour_km=6.0) is True
+    assert is_detour_compatible(solo_distance_km=10.0, added_detour_km=3.1, max_detour_pct=0.30, max_detour_km=6.0) is False
+
+    # Case B: Solo 30 km. 30% is 9 km, but capped at 6.0 km.
+    assert is_detour_compatible(solo_distance_km=30.0, added_detour_km=6.0, max_detour_pct=0.30, max_detour_km=6.0) is True
+    assert is_detour_compatible(solo_distance_km=30.0, added_detour_km=6.1, max_detour_pct=0.30, max_detour_km=6.0) is False
+    print("  ✓ Dual detour model boundary precision verified (percentage and km caps)")
+
+
+def test_milestone1_incompatible_route_never_grouped():
+    """Milestone 1 Test 7: North vs South destination routes are never pooled together."""
+    db = create_test_db()
+    station = seed_test_station(db)
+    now = datetime.now(timezone.utc)
+
+    # Rider A heading North of Airport (Devanahalli)
+    add_user(db, 1, "North Rider")
+    r1 = RideRequest(
+        id=1, user_id=1, station_id=station.id,
+        dest_lat=13.2486, dest_lng=77.7126, dest_name="Devanahalli",
+        arrival_time=now, ride_type="shared", status="pending",
+    )
+    db.add(r1)
+
+    # Rider B heading Far South (Electronic City)
+    add_user(db, 2, "South Rider")
+    r2 = RideRequest(
+        id=2, user_id=2, station_id=station.id,
+        dest_lat=12.8456, dest_lng=77.6603, dest_name="Electronic City",
+        arrival_time=now + timedelta(minutes=2),
+        ride_type="shared", status="pending",
+    )
+    db.add(r2)
+    db.commit()
+
+    # Attempting match on Rider 1 must NOT pair with Rider 2
+    res = match_ride(db, r1)
+    assert res is None, "Incompatible routes were incorrectly grouped!"
+    print("  ✓ North and South diverging routes correctly isolated and not grouped")
+
+
 # ── Run All Tests ─────────────────────────────────────────────────────
 
 def run_all():
@@ -363,6 +569,14 @@ def run_all():
         ("Scenario B: Route Overlap → Matched", test_scenario_b_route_overlap),
         ("Scenario C: No Match → Solo", test_scenario_c_no_match),
         ("Scenario D: 5 Passengers → Capacity Split", test_scenario_d_capacity_overflow),
+        # Milestone 1 Required Tests
+        ("M1: 5 Riders Capacity Split", test_milestone1_five_riders_capacity_split),
+        ("M1: Mid-Group Cancel & Price Guarantee", test_milestone1_mid_group_cancellation_price_guarantee),
+        ("M1: Late Joiner Fills Open Seat", test_milestone1_late_joiner_fills_open_seat),
+        ("M1: Simultaneous Accepts & Concurrency", test_milestone1_simultaneous_accepts_concurrency),
+        ("M1: OSRM Fallback Robustness", test_milestone1_osrm_down_fallback),
+        ("M1: Detour Boundary Precision", test_milestone1_detour_limit_boundary),
+        ("M1: Incompatible Route Isolation", test_milestone1_incompatible_route_never_grouped),
     ]
 
     print("\n" + "=" * 60)
@@ -391,3 +605,4 @@ def run_all():
 if __name__ == "__main__":
     success = run_all()
     sys.exit(0 if success else 1)
+

@@ -53,6 +53,7 @@ export default function RideRequestPage() {
   const [arrivalTime, setArrivalTime] = useState('');
   const [flightTrain, setFlightTrain] = useState('');
   const [rideType, setRideType] = useState('shared');
+  const [matchWindowMinutes, setMatchWindowMinutes] = useState(20);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -113,6 +114,7 @@ export default function RideRequestPage() {
         arrival_time: new Date(arrivalTime).toISOString(),
         flight_train_number: flightTrain || null,
         ride_type: rideType,
+        match_window_minutes: matchWindowMinutes,
       });
       if (rideType === 'shared') {
         navigate(`/ride/${ride.id}/matching`);
@@ -290,6 +292,34 @@ export default function RideRequestPage() {
               </button>
             </div>
           </div>
+
+          {/* Flexible Match Wait Window */}
+          {rideType === 'shared' && (
+            <div className="animate-fade-in-up" style={{ animationDelay: '0.22s' }}>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-text-secondary text-sm font-medium">
+                  Wait Window for Co-Travelers
+                </label>
+                <span className="text-xs text-text-muted">±{matchWindowMinutes} mins</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[10, 15, 20].map((mins) => (
+                  <button
+                    key={mins}
+                    type="button"
+                    onClick={() => setMatchWindowMinutes(mins)}
+                    className={`py-2.5 px-2 rounded-xl text-xs font-semibold border transition-all ${
+                      matchWindowMinutes === mins
+                        ? 'border-accent bg-accent/15 text-accent shadow-sm shadow-accent/20'
+                        : 'border-border bg-bg-surface text-text-secondary hover:border-border'
+                    }`}
+                  >
+                    Up to {mins} min
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Instant Fare Estimate Preview */}
           {selectedStation && destLat && destLng && (

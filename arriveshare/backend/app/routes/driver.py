@@ -136,14 +136,16 @@ def update_assignment_status(
 
     transition_ride_group(db, group, data.status)
 
-    # Also update all ride requests in the group
+    # Also update active ride requests in the group
     for req in group.ride_requests:
-        if req.status != "cancelled":
+        if req.status not in ("cancelled", "completed"):
             if data.status == "on_trip":
                 transition_ride_request(db, req, "on_trip")
             elif data.status == "completed":
                 transition_ride_request(db, req, "completed")
-                driver.available = True
+
+    if data.status == "completed":
+        driver.available = True
 
     db.commit()
     return {"status": group.status, "message": f"Group {group_id} updated to {data.status}"}

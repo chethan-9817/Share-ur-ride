@@ -130,6 +130,9 @@ def test_ride_lifecycle_and_matching():
         test_groups = db.query(RideGroup).all()
         for g in test_groups:
             db.delete(g)
+        # Reset driver availability
+        from app.models import Driver
+        db.query(Driver).update({Driver.available: True})
         seed_ride_requests(db)
         db.commit()
     finally:
