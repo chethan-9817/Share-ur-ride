@@ -38,6 +38,7 @@ RIDE_REQUEST_TRANSITIONS: Dict[str, Set[str]] = {
     },
     RideRequestStatus.MATCHED: {
         RideRequestStatus.CONFIRMED,
+        RideRequestStatus.ON_TRIP,     # Direct departure / boarding
         RideRequestStatus.PENDING,     # Declined or timed out
         RideRequestStatus.CANCELLED,
     },
@@ -61,6 +62,7 @@ RIDE_GROUP_TRANSITIONS: Dict[str, Set[str]] = {
     },
     RideGroupStatus.ACCEPTING: {
         RideGroupStatus.CONFIRMED,
+        RideGroupStatus.ON_TRIP,      # Driver initiates trip
         RideGroupStatus.FORMING,      # Member declined, back to forming
         RideGroupStatus.CANCELLED,    # Group dissolved
     },
