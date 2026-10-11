@@ -518,6 +518,9 @@ python -m pytest tests/ -v
    - Animated radar screen scanning for co-travelers along the same corridor.
    - Real-time 2-minute countdown timer with Price Guarantee badge.
    - Transparent cost breakdown showing solo price vs shared split.
+5. **Trip Status Page (`/ride/:id`)**:
+   - Live multi-stop route polyline.
+
 
 ---
 
