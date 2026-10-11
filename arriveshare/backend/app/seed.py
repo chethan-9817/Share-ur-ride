@@ -205,6 +205,8 @@ def seed_ride_requests(db: Session):
             RideRequest.dest_name == dest_name,
         ).first()
         if existing:
+            if existing.status == "pending":
+                existing.arrival_time = now + timedelta(minutes=time_offset)
             continue
 
         dest_coords = DESTINATIONS[dest_name]

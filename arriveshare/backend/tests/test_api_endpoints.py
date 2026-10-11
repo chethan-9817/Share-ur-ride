@@ -116,6 +116,25 @@ def test_auth_flows():
 
 def test_ride_lifecycle_and_matching():
     """Verify end-to-end flow: ride creation, matching, trip sharing, and driver updates."""
+    from app.database import SessionLocal
+    from app.models import RideRequest, RideGroup
+    from app.seed import seed_ride_requests
+
+    db = SessionLocal()
+    try:
+        # Clean up any leftover test rides from previous runs
+        test_rides = db.query(RideRequest).filter(RideRequest.id > 30).all()
+        for r in test_rides:
+            db.delete(r)
+        # Reset groups
+        test_groups = db.query(RideGroup).all()
+        for g in test_groups:
+            db.delete(g)
+        seed_ride_requests(db)
+        db.commit()
+    finally:
+        db.close()
+
     # 1. Login Passenger 1
     p1_token = login_user("passenger1@arriveshare.test")
     p1_headers = {"Authorization": f"Bearer {p1_token}"}
