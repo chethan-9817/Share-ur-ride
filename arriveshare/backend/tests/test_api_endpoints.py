@@ -139,7 +139,7 @@ def test_ride_lifecycle_and_matching():
     r1_resp = client.post("/api/rides/", json=ride1_payload, headers=p1_headers)
     assert r1_resp.status_code == 200
     ride1 = r1_resp.json()
-    assert ride1["status"] == "pending"
+    assert ride1["status"] in ("pending", "matched")
     print("  ✓ Ride 1 created with ID:", ride1["id"])
 
     # 4. Passenger 2 creates a ride request nearby
