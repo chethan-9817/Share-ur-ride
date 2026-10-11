@@ -132,20 +132,18 @@ def update_assignment_status(
     if not group:
         raise HTTPException(status_code=404, detail="Assignment not found")
 
-    valid_statuses = ["forming", "confirmed", "on_trip", "completed"]
-    if data.status not in valid_statuses:
-        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of {valid_statuses}")
+    from ..services.state_machine import transition_ride_group, transition_ride_request
 
-    group.status = data.status
+    transition_ride_group(db, group, data.status)
 
     # Also update all ride requests in the group
     for req in group.ride_requests:
-        if data.status == "on_trip":
-            req.status = "on_trip"
-        elif data.status == "completed":
-            req.status = "completed"
-            # Free the driver
-            driver.available = True
+        if req.status != "cancelled":
+            if data.status == "on_trip":
+                transition_ride_request(db, req, "on_trip")
+            elif data.status == "completed":
+                transition_ride_request(db, req, "completed")
+                driver.available = True
 
     db.commit()
     return {"status": group.status, "message": f"Group {group_id} updated to {data.status}"}
