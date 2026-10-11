@@ -525,6 +525,8 @@ python -m pytest tests/ -v
 6. **Driver Dashboard (`/driver`)**:
    - Online/Offline availability toggle.
    - Total earnings and completed trips tracker.
+   - Assigned group route map with numbered pickup and dropoff stops.
+
 
 
 
