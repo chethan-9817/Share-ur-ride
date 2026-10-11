@@ -68,6 +68,16 @@ class RideRequestCreate(BaseModel):
     arrival_time: datetime
     flight_train_number: Optional[str] = None
     ride_type: str = "shared"      # solo | shared
+    match_window_minutes: Optional[int] = 20
+
+
+class RideRequestUpdate(BaseModel):
+    dest_lat: Optional[float] = None
+    dest_lng: Optional[float] = None
+    dest_name: Optional[str] = None
+    arrival_time: Optional[datetime] = None
+    flight_train_number: Optional[str] = None
+    match_window_minutes: Optional[int] = None
 
 
 class RideRequestResponse(BaseModel):
@@ -79,13 +89,18 @@ class RideRequestResponse(BaseModel):
     dest_name: str
     arrival_time: datetime
     flight_train_number: Optional[str] = None
+    match_window_minutes: Optional[int] = 20
     ride_type: str
     status: str
     group_id: Optional[int] = None
     solo_fare: Optional[float] = None
     shared_fare: Optional[float] = None
+    accepted_fare: Optional[float] = None
+    platform_subsidy: Optional[float] = 0.0
     savings_pct: Optional[float] = None
     drop_order: Optional[int] = None
+    accept_expires_at: Optional[datetime] = None
+    version: Optional[int] = 1
     created_at: datetime
     user: Optional[UserResponse] = None
     station: Optional[StationResponse] = None
@@ -116,7 +131,10 @@ class GroupResponse(BaseModel):
     status: str
     total_distance_km: Optional[float] = None
     total_fare: Optional[float] = None
+    platform_subsidy: Optional[float] = 0.0
     capacity: int
+    accept_expires_at: Optional[datetime] = None
+    version: Optional[int] = 1
     created_at: datetime
     ride_requests: List[RideRequestResponse] = []
     station: Optional[StationResponse] = None
@@ -137,12 +155,17 @@ class CoTraveler(BaseModel):
 
 class MatchResult(BaseModel):
     group_id: int
+    status: Optional[str] = "accepting"
     co_travelers: List[CoTraveler]
     dropoff_order: List[dict]       # [{order, dest_name, lat, lng}]
     total_route_km: float
     solo_fare: float
     shared_fare: float
     savings_pct: float
+    savings_inr: Optional[float] = None
+    distance_share_pct: Optional[float] = None
+    platform_subsidy: Optional[float] = 0.0
+    accept_expires_at: Optional[str] = None
     message: str                    # e.g. "You save 42%!"
 
 
