@@ -115,6 +115,7 @@ export default function DriverDashboard() {
   };
 
   const statusActions = {
+    accepting: { next: 'confirmed', label: '✓ Accept Ride Group',  color: 'from-accent to-cyan-600' },
     forming:   { next: 'confirmed', label: '✓ Confirm Pickup',  color: 'from-success to-emerald-600' },
     confirmed: { next: 'on_trip',   label: '🚗 Start Trip',      color: 'from-accent to-cyan-600' },
     on_trip:   { next: 'completed', label: '🏁 Complete Trip',   color: 'from-primary to-primary-dark' },
@@ -282,9 +283,9 @@ export default function DriverDashboard() {
                   />
                   {mapStops.map((stop, i) => (
                     <Marker
-                      key={i}
+                      key={`stop-${stop.type}-${i}-${stop.lat}-${stop.lng}`}
                       position={[stop.lat, stop.lng]}
-                      icon={stop.type === 'pickup' ? undefined : dropoffIcon}
+                      icon={stop.type === 'pickup' ? pickupIcon : dropoffIcon}
                     >
                       <Popup>
                         {stop.type === 'pickup' ? '📍 Pickup: ' : `Drop #${stop.order}: `}
