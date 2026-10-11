@@ -5,7 +5,7 @@ SQLAlchemy engine and session factory.
 Uses SQLite for MVP; swap to PostgreSQL by changing DATABASE_URL in .env.
 """
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, declarative_base
 from .config import settings
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
@@ -17,6 +17,16 @@ if "sqlite" in SQLALCHEMY_DATABASE_URL:
     connect_args["check_same_thread"] = False
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args)
+
+# Enable WAL mode and busy timeout for concurrent SQLite reads/writes
+@event.listens_for(engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    if "sqlite" in SQLALCHEMY_DATABASE_URL:
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA busy_timeout=5000;")
+        cursor.close()
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
