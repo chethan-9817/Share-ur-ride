@@ -520,6 +520,8 @@ python -m pytest tests/ -v
    - Transparent cost breakdown showing solo price vs shared split.
 5. **Trip Status Page (`/ride/:id`)**:
    - Live multi-stop route polyline.
+   - - Driver vehicle and contact card.
+   - 1-click **Share Trip with Family** and **Emergency SOS** triggers.
 
 
 ---
