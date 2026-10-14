@@ -479,27 +479,23 @@ stateDiagram-v2
 
 ---
 
-## 🧪 Testing & Verification
-
-ArriveShare includes a comprehensive automated test suite covering all routing permutations, detour limits, fair splits, and concurrency.
+🧪 Testing & Verification
+ArriveShare includes an automated test suite covering all routing permutations, detour limits, fair splits, and concurrency.
 
 Run tests using Pytest:
-```powershell
-cd "c:\prject 3 main\arriveshare\backend"
-python -m pytest tests/ -v
-```
 
-### Test Coverage Highlights:
-- **`test_matching.py`**:
-  - Distance computation verification (Haversine vs OSRM).
-  - Exact permutation solver correctness ($N \le 4$).
-  - Dual detour threshold compliance ($\le 30\%$ and $\le 6.0\text{ km}$).
-  - Proportional fair-share pricing and single base fare check.
-  - Price guarantee persistence under late-joiner additions.
-- **`test_api_endpoints.py`**:
-  - Passwordless authentication flow & token issuance.
-  - Ride booking, flexible patch updates, and cancellation recalculation.
-  - State machine transition validity and optimistic locking.
+bash
+cd arriveshare/backend
+python -m pytest tests/ -v
+Test Coverage Highlights:
+test_matching.py:
+Distance computation verification (Haversine vs OSRM).
+Exact permutation solver correctness ($N \le 4$).
+Dual detour threshold compliance ($\le 30%$ and $\le 6.0\text{ km}$).
+Proportional fair-share pricing and single base fare check.
+Price guarantee persistence under late-joiner additions.
+test_api_endpoints.py:
+Passwordless authentication flow & token issuance.
 
 ---
 
