@@ -1,4 +1,7 @@
 # 🚖 ArriveShare
+> **Smart, Fair & Safe Ride-Pooling for Airport and Railway Station Arrivals**
+
+ArriveShare is an intelligent, full-stack ride-pooling platform engineered specifically to solve the high-friction, high-cost bottleneck of transportation hub arrivals. By consolidating travelers arriving at airports and railway stations within narrow time windows and heading along shared transit corridors, ArriveShare dramatically cuts passenger commute expenses, enhances driver earnings, ensures passenger safety and fairness, and mitigates urban highway congestion.
 
 
 ---
