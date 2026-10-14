@@ -496,6 +496,8 @@ Proportional fair-share pricing and single base fare check.
 Price guarantee persistence under late-joiner additions.
 test_api_endpoints.py:
 Passwordless authentication flow & token issuance.
+Ride booking, flexible patch updates, and cancellation recalculation.
+State machine transition validity and optimistic locking.
 
 ---
 
