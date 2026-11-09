@@ -263,7 +263,7 @@ export async function earnings(driverId: string): Promise<EarningsDto> {
       completedAt: rideGroups.completedAt,
       net: rideGroups.driverNet,
       bonus: rideGroups.driverBonus,
-      pax: sql<number>`(select coalesce(sum(r.seats),0)::int from ride_requests r where r.group_id = ${rideGroups.id} and r.status = 'completed')`,
+      pax: sql<number>`(select coalesce(sum(r.seats),0)::int from ride_requests r where r.group_id = "ride_groups"."id" and r.status = 'completed')`,
     })
     .from(rideGroups)
     .where(and(eq(rideGroups.driverId, driverId), eq(rideGroups.status, 'completed'), isNotNull(rideGroups.completedAt)));
