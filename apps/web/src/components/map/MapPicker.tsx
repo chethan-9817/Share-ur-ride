@@ -6,7 +6,7 @@ import { MapContainer, Marker, ZoomControl, useMap, useMapEvents } from 'react-l
 import { toast } from 'sonner';
 import { currentPosition } from '@/hooks/useGeolocation';
 import { cn } from '@/lib/utils';
-import { AutoResize, fitTo, MapButton, Tiles } from './LiveMap';
+import { AutoResize, fitTo, LayerSwitcher, MapButton, Tiles } from './LiveMap';
 import { destIcon, hubIcon, meIcon } from './markers';
 
 function ClickToPick({ onPick }: { onPick: (p: LatLng) => void }) {
@@ -85,6 +85,7 @@ export function MapPicker({
       </MapContainer>
 
       <div className="absolute right-3 top-3 z-[500] flex flex-col gap-2">
+        <LayerSwitcher />
         <MapButton label="Show hub and drop" onClick={() => map && fitTo(map, value ? [hub, value] : [hub], 14)}>
           <Crosshair className="h-5 w-5" />
         </MapButton>

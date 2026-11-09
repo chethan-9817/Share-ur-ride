@@ -1,9 +1,10 @@
 import type { LatLng } from '@arriveshare/shared';
 import L from 'leaflet';
-import { Crosshair, Navigation } from 'lucide-react';
+import { Crosshair, Layers, Navigation } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { MapContainer, Marker, Polyline, TileLayer, Tooltip, ZoomControl, useMap } from 'react-leaflet';
 import { cn } from '@/lib/utils';
+import { routeColors, useMapLayer, type MapLayer } from '@/store/mapLayer';
 import { carIcon, destIcon, hubIcon, stopIcon } from './markers';
 
 export interface MapStop extends LatLng {
@@ -15,16 +16,75 @@ export interface MapStop extends LatLng {
 
 const BENGALURU: LatLng = { lat: 12.9716, lng: 77.5946 };
 
-/** Bright, readable street tiles (CARTO Voyager) with retina support. */
+const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services';
+const ESRI_ATTR = 'Imagery &copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics';
+
+/**
+ * Base map. "hybrid" = satellite imagery + roads + place names (Google-style),
+ * "satellite" = imagery only, "streets" = CARTO Voyager street map.
+ */
 export function Tiles() {
+  const layer = useMapLayer((s) => s.layer);
+  if (layer === 'streets') {
+    return (
+      <TileLayer
+        key="streets"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        subdomains="abcd"
+        maxZoom={20}
+        maxNativeZoom={19}
+        detectRetina
+      />
+    );
+  }
   return (
-    <TileLayer
-      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>'
-      url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-      subdomains="abcd"
-      maxZoom={19}
-      detectRetina
-    />
+    <>
+      <TileLayer key="imagery" attribution={ESRI_ATTR} url={`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`} maxZoom={20} maxNativeZoom={19} />
+      {layer === 'hybrid' && (
+        <>
+          <TileLayer key="roads" url={`${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`} maxZoom={20} maxNativeZoom={19} opacity={0.9} />
+          <TileLayer key="labels" url={`${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`} maxZoom={20} maxNativeZoom={19} />
+        </>
+      )}
+    </>
+  );
+}
+
+const LAYERS: { id: MapLayer; label: string; swatch: string }[] = [
+  { id: 'hybrid', label: 'Satellite + labels', swatch: 'bg-[linear-gradient(135deg,#14532d,#365314_45%,#facc15_46%,#facc15_52%,#1e3a8a_53%)]' },
+  { id: 'satellite', label: 'Satellite', swatch: 'bg-[linear-gradient(135deg,#14532d,#3f6212,#1e3a8a)]' },
+  { id: 'streets', label: 'Streets', swatch: 'bg-[linear-gradient(135deg,#f8fafc,#e2e8f0_45%,#fde68a_46%,#fde68a_52%,#bfdbfe_53%)]' },
+];
+
+/** Google-style layer chooser shown in the map corner. */
+export function LayerSwitcher() {
+  const { layer, setLayer } = useMapLayer();
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <MapButton label="Map type" onClick={() => setOpen((o) => !o)} active={open}>
+        <Layers className="h-5 w-5" />
+      </MapButton>
+      {open && (
+        <div className="absolute right-12 top-0 w-48 rounded-2xl bg-white p-2 shadow-soft ring-1 ring-indigo-100">
+          {LAYERS.map((l) => (
+            <button
+              key={l.id}
+              type="button"
+              onClick={() => {
+                setLayer(l.id);
+                setOpen(false);
+              }}
+              className={cn('flex w-full items-center gap-3 rounded-xl p-2 text-left text-sm font-semibold', layer === l.id ? 'bg-brand-50 text-brand-700' : 'hover:bg-slate-50')}
+            >
+              <span className={cn('h-8 w-8 shrink-0 rounded-lg ring-1 ring-black/10', l.swatch)} />
+              {l.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -157,6 +217,7 @@ export function LiveMap({
 }) {
   const [map, setMap] = useState<L.Map | null>(null);
   const [following, setFollowing] = useState(!!follow);
+  const colors = routeColors(useMapLayer((s) => s.layer));
   useEffect(() => setFollowing(!!follow), [follow]);
 
   const fitPoints = useMemo(() => {
@@ -206,8 +267,8 @@ export function LiveMap({
         {follow && <Follow target={driver ?? null} enabled={following} onPause={() => setFollowing(false)} />}
         {route.length > 1 && (
           <>
-            <Polyline positions={route} pathOptions={{ color: '#ffffff', weight: 9, opacity: 0.95, lineCap: 'round' }} />
-            <Polyline positions={route} pathOptions={{ color: '#4f46e5', weight: 5, lineCap: 'round' }} />
+            <Polyline positions={route} pathOptions={{ color: colors.casing, weight: 9, opacity: 0.85, lineCap: 'round' }} />
+            <Polyline positions={route} pathOptions={{ color: colors.line, weight: 5, lineCap: 'round' }} />
           </>
         )}
         {hub && (
@@ -226,6 +287,7 @@ export function LiveMap({
       </MapContainer>
 
       <div className="absolute right-3 top-3 z-[500] flex flex-col gap-2">
+        <LayerSwitcher />
         <MapButton onClick={recenter} label={follow ? 'Follow the cab' : 'Show whole route'} active={follow && following}>
           {follow ? <Navigation className="h-5 w-5" /> : <Crosshair className="h-5 w-5" />}
         </MapButton>
