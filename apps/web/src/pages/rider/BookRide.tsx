@@ -49,6 +49,7 @@ export default function BookRide() {
   const [womenOnly, setWomenOnly] = useState(isWoman && user.safety.womenOnlyDefault);
   const [femaleDriver, setFemaleDriver] = useState(isWoman && user.safety.preferFemaleDriver);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [focusKey, setFocusKey] = useState(0);
 
   useEffect(() => {
     if (!stationId && stations[0]) setStationId(stations[0].id);
@@ -74,6 +75,7 @@ export default function BookRide() {
     setLabel(p.label);
     setQuery(p.short);
     setSearchOpen(false);
+    setFocusKey((k) => k + 1);
   };
 
   const onMapPick = async (p: LatLng) => {
@@ -172,7 +174,7 @@ export default function BookRide() {
 
         {station && (
           <div onClick={() => setSearchOpen(false)}>
-            <MapPicker hub={station} hubType={station.type} value={dest} onChange={onMapPick} />
+            <MapPicker hub={station} hubType={station.type} value={dest} onChange={onMapPick} focusKey={focusKey} />
             {label && <p className="mt-2 line-clamp-1 text-xs text-slate-500">📍 {label}</p>}
           </div>
         )}
