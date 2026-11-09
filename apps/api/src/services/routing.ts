@@ -36,11 +36,11 @@ function estimate(points: LatLng[]): RouteResult {
   return { km: round2(km), durationMin: Math.round((km / AVG_KMH) * 60), geometry: points, source: 'estimate' };
 }
 
-async function osrm(points: LatLng[]): Promise<RouteResult> {
+async function osrm(points: LatLng[], timeoutMs: number): Promise<RouteResult> {
   const coords = points.map((p) => `${p.lng},${p.lat}`).join(';');
   const url = `${env.OSRM_BASE_URL}/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`;
   const res = await fetch(url, {
-    signal: AbortSignal.timeout(env.OSRM_TIMEOUT_MS),
+    signal: AbortSignal.timeout(timeoutMs),
     headers: { 'User-Agent': 'ArriveShare/2.0 (ride-pooling demo)' },
   });
   if (!res.ok) throw new Error(`OSRM ${res.status}`);
@@ -75,17 +75,25 @@ export async function routeThrough(points: LatLng[]): Promise<RouteResult> {
   if (hit) return hit;
 
   if (env.OSRM_ENABLED && Date.now() >= breakerOpenUntil) {
-    try {
-      const r = await osrm(points);
-      remember(k, r);
-      return r;
-    } catch {
-      breakerOpenUntil = Date.now() + 60_000;
+    // The public OSRM demo server is occasionally slow: one retry before giving up.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const r = await osrm(points, attempt === 0 ? env.OSRM_TIMEOUT_MS : env.OSRM_TIMEOUT_MS * 2);
+        remember(k, r);
+        return r;
+      } catch {
+        /* retry once */
+      }
     }
+    breakerOpenUntil = Date.now() + 30_000;
   }
-  const est = estimate(points);
-  remember(k, est);
-  return est;
+  // Estimates are NOT cached — the next request gets another chance at a real road route.
+  return estimate(points);
+}
+
+/** True when a stored route is just straight lines between stops (OSRM was unavailable). */
+export function isStraightLineRoute(route: LatLng[], stops: number) {
+  return route.length > 0 && route.length <= stops + 1;
 }
 
 export async function roadKm(a: LatLng, b: LatLng): Promise<number> {
