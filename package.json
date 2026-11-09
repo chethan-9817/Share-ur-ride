@@ -4,7 +4,7 @@
   "private": true,
   "description": "ArriveShare — safe, fair ride-pooling for airport & railway arrivals",
   "author": "CHETHAN K S",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "type": "module",
   "workspaces": [
     "packages/*",
