@@ -2,7 +2,7 @@ import { Loader2 } from 'lucide-react';
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'safe' | 'success';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'safe' | 'success' | 'light';
 type Size = 'sm' | 'md' | 'lg';
 
 const variants: Record<Variant, string> = {
@@ -13,6 +13,8 @@ const variants: Record<Variant, string> = {
   danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-sm shadow-red-600/30',
   safe: 'bg-safe-600 text-white hover:bg-safe-700 shadow-sm shadow-safe-600/30',
   success: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm shadow-emerald-600/30',
+  // For use on coloured/gradient surfaces.
+  light: 'bg-white text-brand-700 hover:bg-brand-50 shadow-lg shadow-black/10',
 };
 
 const sizes: Record<Size, string> = {

@@ -32,8 +32,7 @@ export default function RiderHome() {
           <div>
             <p className="text-sm font-semibold text-white/80">{greet}, {user.name.split(' ')[0]} 👋</p>
             <h1 className="mt-1 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-              Landed? Let’s get you
-              <br className="hidden sm:block" /> home together.
+              Landed? Let’s get you <span className="sm:block">home together.</span>
             </h1>
             <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
               {['Verified drivers', 'PIN pickup', 'Live trip sharing', 'Silent SOS'].map((t) => (
@@ -45,7 +44,7 @@ export default function RiderHome() {
           </div>
           {!active && (
             <Link to="/book">
-              <Button size="lg" className="w-full bg-white text-brand-700 shadow-lg hover:bg-white/90 md:w-auto" icon={<ArrowRight className="h-5 w-5" />}>
+              <Button size="lg" variant="light" className="w-full md:w-auto" icon={<ArrowRight className="h-5 w-5" />}>
                 Book a shared ride
               </Button>
             </Link>
