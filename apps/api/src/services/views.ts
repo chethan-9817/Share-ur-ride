@@ -24,6 +24,7 @@ import {
   type User,
 } from '../db/schema';
 import { notFound } from '../lib/errors';
+import { isStraightLineRoute, routeThrough } from './routing';
 
 /** DTO mappers. Privacy rules for co-riders live here — and only here. */
 
@@ -163,6 +164,18 @@ export async function groupView(groupId: string, viewer: Viewer): Promise<GroupD
     .innerJoin(users, eq(users.id, rideRequests.userId))
     .where(eq(rideRequests.groupId, groupId))
     .orderBy(asc(rideRequests.dropIndex));
+
+  // Self-heal routes that were stored as straight lines while OSRM was unreachable.
+  const stopsInOrder = members
+    .filter((m) => !['cancelled', 'expired', 'no_show'].includes(m.ride.status))
+    .map((m) => ({ lat: m.ride.destLat, lng: m.ride.destLng }));
+  if (stopsInOrder.length && isStraightLineRoute(g.group.route, stopsInOrder.length)) {
+    const fresh = await routeThrough([{ lat: g.station.lat, lng: g.station.lng }, ...stopsInOrder]);
+    if (fresh.source === 'osrm') {
+      g.group.route = fresh.geometry;
+      await db.update(rideGroups).set({ route: fresh.geometry }).where(eq(rideGroups.id, groupId));
+    }
+  }
 
   const driverRow = g.group.driverId ? await loadDriverWithUser(g.group.driverId) : null;
   const isDriver = !!driverRow && driverRow.user.id === viewer.userId;
