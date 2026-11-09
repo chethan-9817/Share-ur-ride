@@ -1,8 +1,8 @@
 import type { UserDto } from '@arriveshare/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ArrowLeft, Car, Mail, ShieldCheck, User, UserCog } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { homeFor } from '@/components/layout/Guards';
 import { Button } from '@/components/ui/Button';
@@ -22,7 +22,7 @@ export default function Login() {
   const nav = useNavigate();
   const loc = useLocation();
   const { data: config } = useConfig();
-  const from = (loc.state as { from?: string } | null)?.from;
+  const from = (loc.state as { from?: string } | null)?.from ?? new URLSearchParams(loc.search).get('next') ?? undefined;
 
   const finish = (s: Session) => {
     setSession(s.accessToken, s.user);
@@ -54,6 +54,18 @@ export default function Login() {
     onSuccess: finish,
     onError: (e) => toast.error(errorMessage(e)),
   });
+
+  // Demo deep link: /login?demo=rider (or rider2, driver, admin) signs straight in.
+  const [params] = useSearchParams();
+  const demoAs = params.get('demo');
+  const tried = useRef(false);
+  useEffect(() => {
+    if (!config?.demoMode || tried.current) return;
+    if (demoAs === 'rider' || demoAs === 'rider2' || demoAs === 'driver' || demoAs === 'admin') {
+      tried.current = true;
+      demo.mutate(demoAs);
+    }
+  }, [config?.demoMode, demoAs, demo]);
 
   return (
     <div className="pt-safe flex min-h-screen flex-col ">
