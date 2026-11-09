@@ -96,15 +96,17 @@ export async function buildApp() {
 
   // Production: serve the built SPA from the same origin (cookies + sockets just work).
   const webDist = path.resolve(process.cwd(), '../web/dist');
-  if (isProd && fs.existsSync(webDist)) {
-    await app.register(fastifyStatic, { root: webDist, wildcard: false });
-    app.setNotFoundHandler((req, reply) => {
-      if (req.url.startsWith('/api') || req.url.startsWith('/socket.io')) {
-        return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Not found' } });
-      }
-      return reply.sendFile('index.html');
-    });
-  }
+  const serveSpa = isProd && fs.existsSync(webDist);
+  if (serveSpa) await app.register(fastifyStatic, { root: webDist, wildcard: false });
+
+  // One 404 handler: JSON for API routes, index.html for client-side routes.
+  app.setNotFoundHandler((req, reply) => {
+    const isApi = req.url.startsWith('/api') || req.url.startsWith('/socket.io') || req.url.startsWith('/docs');
+    if (serveSpa && !isApi && req.method === 'GET') return reply.sendFile('index.html');
+    return reply
+      .status(404)
+      .send({ error: { code: 'NOT_FOUND', message: `Route ${req.method} ${req.url} not found` } });
+  });
 
   return { app, origins };
 }

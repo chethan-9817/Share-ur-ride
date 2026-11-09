@@ -53,10 +53,4 @@ export default fp(async function errorsPlugin(app: FastifyInstance) {
       .status(500)
       .send({ error: { code: 'INTERNAL', message: 'Something went wrong on our side' } });
   });
-
-  app.setNotFoundHandler((req, reply) => {
-    reply
-      .status(404)
-      .send({ error: { code: 'NOT_FOUND', message: `Route ${req.method} ${req.url} not found` } });
-  });
 });
