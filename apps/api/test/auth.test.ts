@@ -47,17 +47,45 @@ describe('auth', () => {
     expect(r.json().error.code).toBe('VALIDATION_ERROR');
   });
 
-  it('rotates refresh tokens and revokes the family when an old one is reused', async () => {
+  it('lets two tabs refresh with the same token at the same moment', async () => {
+    const { cookie } = await otpLogin(app, 'two.tabs@example.com');
+    const [a, b] = await Promise.all([
+      app.inject({ method: 'POST', url: '/api/auth/refresh', headers: { cookie } }),
+      app.inject({ method: 'POST', url: '/api/auth/refresh', headers: { cookie } }),
+    ]);
+    expect(a.statusCode).toBe(200);
+    expect(b.statusCode).toBe(200);
+  });
+
+  it('revokes the whole session family when a rotated token is replayed later', async () => {
     const { cookie } = await otpLogin(app, 'rotate.me@example.com');
     const first = await app.inject({ method: 'POST', url: '/api/auth/refresh', headers: { cookie } });
     expect(first.statusCode).toBe(200);
     const nextCookie = String(first.headers['set-cookie']).split(';')[0]!;
+
+    // Pretend the old token was rotated a minute ago (outside the grace window).
+    const { refreshTokens } = await import('../src/db/schema');
+    const { sha256 } = await import('../src/lib/crypto');
+    const { db } = await import('../src/db/client');
+    const { eq } = await import('drizzle-orm');
+    const old = new Date(Date.now() - 60_000);
+    await db
+      .update(refreshTokens)
+      .set({ rotatedAt: old, revokedAt: old })
+      .where(eq(refreshTokens.tokenHash, sha256(decodeURIComponent(cookie.split('=')[1]!))));
 
     const reuse = await app.inject({ method: 'POST', url: '/api/auth/refresh', headers: { cookie } });
     expect(reuse.statusCode).toBe(401);
     // The legitimately rotated token is now revoked too.
     const after = await app.inject({ method: 'POST', url: '/api/auth/refresh', headers: { cookie: nextCookie } });
     expect(after.statusCode).toBe(401);
+  });
+
+  it('does not accept a token after logout, even within the grace window', async () => {
+    const { cookie } = await otpLogin(app, 'logout.me@example.com');
+    await app.inject({ method: 'POST', url: '/api/auth/logout', headers: { cookie } });
+    const r = await app.inject({ method: 'POST', url: '/api/auth/refresh', headers: { cookie } });
+    expect(r.statusCode).toBe(401);
   });
 
   it('protects routes and enforces roles', async () => {
