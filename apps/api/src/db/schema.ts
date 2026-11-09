@@ -243,6 +243,8 @@ export const rideRequests = pgTable(
     cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
     cancelReason: text('cancel_reason'),
     declineCount: integer('decline_count').notNull().default(0),
+    /** Groups this rider declined or timed out of — never re-pooled into them. */
+    declinedGroupIds: jsonb('declined_group_ids').$type<string[]>().notNull().default(sql`'[]'::jsonb`),
     version: integer('version').notNull().default(1),
     ...timestamps,
   },

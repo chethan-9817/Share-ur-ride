@@ -1,0 +1,1 @@
+ALTER TABLE "ride_requests" ADD COLUMN "declined_group_ids" jsonb DEFAULT '[]'::jsonb NOT NULL;
