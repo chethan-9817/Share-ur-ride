@@ -21,13 +21,15 @@ export default function DemoSwitch() {
   const [params] = useSearchParams();
   const { data: config, isLoading } = useConfig();
   const setSession = useAuth((s) => s.setSession);
+  // Wait for the boot-time session restore, otherwise it could overwrite the new demo session.
+  const ready = useAuth((s) => s.ready);
   const qc = useQueryClient();
   const nav = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const started = useRef(false);
 
   useEffect(() => {
-    if (!config?.demoMode || started.current || !ACCOUNTS.includes(as as DemoAs)) return;
+    if (!ready || !config?.demoMode || started.current || !ACCOUNTS.includes(as as DemoAs)) return;
     started.current = true;
     api
       .post<{ accessToken: string; user: UserDto }>('/auth/demo', { as })
@@ -37,7 +39,7 @@ export default function DemoSwitch() {
         nav(params.get('next') ?? homeFor(s.user.role), { replace: true });
       })
       .catch((e) => setError(errorMessage(e)));
-  }, [config?.demoMode, as, params, qc, setSession, nav]);
+  }, [ready, config?.demoMode, as, params, qc, setSession, nav]);
 
   if (isLoading) return <PageLoader />;
   if (!config?.demoMode || !ACCOUNTS.includes(as as DemoAs) || error) {
