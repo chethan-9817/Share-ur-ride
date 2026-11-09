@@ -1,7 +1,6 @@
 import { ArrowRight, BadgeIndianRupee, Leaf, MapPinned, Moon, Route, ShieldCheck, Sparkles, UserCheck, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
-import { useTheme } from '@/hooks/useTheme';
 
 const features = [
   { icon: <Users />, title: 'Women-only pools', body: 'Ride only with verified women co-riders, with female drivers offered first.' },
@@ -13,7 +12,6 @@ const features = [
 ];
 
 export default function Landing() {
-  const { theme, toggle } = useTheme();
   return (
     <div className="min-h-screen bg-white dark:bg-ink-950">
       <header className="pt-safe mx-auto flex max-w-6xl items-center justify-between px-4 py-4 lg:px-8">
@@ -21,9 +19,6 @@ export default function Landing() {
           <img src="/icon.svg" alt="" className="h-8 w-8" /> ArriveShare
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={toggle} className="rounded-full px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10">
-            {theme === 'dark' ? 'Light' : 'Dark'}
-          </button>
           <Link to="/login">
             <Button size="sm">Sign in</Button>
           </Link>

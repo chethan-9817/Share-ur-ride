@@ -1,7 +1,5 @@
-// Applies the saved theme before first paint (external file so it passes a strict CSP).
+// ArriveShare uses a single light theme. Clear any dark preference saved by older versions.
 try {
-  var t = localStorage.getItem('as-theme');
-  if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.classList.add('dark');
-  }
+  document.documentElement.classList.remove('dark');
+  localStorage.removeItem('as-theme');
 } catch (e) {}

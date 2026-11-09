@@ -1,12 +1,11 @@
 import type { UserDto } from '@arriveshare/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Car, LogOut, Moon, Sun } from 'lucide-react';
+import { Car, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Avatar, Badge, Card, Rating } from '@/components/ui/primitives';
-import { useTheme } from '@/hooks/useTheme';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/store/auth';
 
@@ -14,7 +13,6 @@ export default function Profile() {
   const { user, setUser, clear } = useAuth();
   const [name, setName] = useState(user?.name ?? '');
   const [phone, setPhone] = useState(user?.phone?.replace('+91', '') ?? '');
-  const { theme, toggle } = useTheme();
   const nav = useNavigate();
   const qc = useQueryClient();
 
@@ -64,10 +62,6 @@ export default function Profile() {
       </Card>
 
       <Card className="divide-y divide-slate-100 dark:divide-white/5">
-        <button onClick={toggle} className="flex w-full items-center gap-3 p-4 text-left text-sm font-semibold">
-          {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-        </button>
         {user.role === 'rider' && (
           <Link to="/driver/onboard" className="flex items-center gap-3 p-4 text-sm font-semibold">
             <Car className="h-5 w-5" /> Become a driver partner

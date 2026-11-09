@@ -6,10 +6,8 @@ import {
   Home,
   LayoutDashboard,
   LogOut,
-  Moon,
   Plus,
   ShieldCheck,
-  Sun,
   User,
   Users,
   Wallet,
@@ -21,7 +19,6 @@ import { CheckInPrompt } from '@/components/safety/CheckInPrompt';
 import { Avatar } from '@/components/ui/primitives';
 import { useLiveInvalidation } from '@/hooks/queries';
 import { useConnectionState } from '@/hooks/useSocket';
-import { useTheme } from '@/hooks/useTheme';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/store/auth';
@@ -59,7 +56,6 @@ const NAV: Record<Role, NavItem[]> = {
 export function AppShell() {
   const user = useAuth((s) => s.user)!;
   const clear = useAuth((s) => s.clear);
-  const { theme, toggle } = useTheme();
   const online = useConnectionState();
   const nav = useNavigate();
   const qc = useQueryClient();
@@ -122,9 +118,6 @@ export function AppShell() {
                 <WifiOff className="h-3.5 w-3.5" /> Reconnecting
               </span>
             )}
-            <button onClick={toggle} className="rounded-full p-2 hover:bg-slate-100 dark:hover:bg-white/10" aria-label="Toggle theme">
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
             <NotificationBell />
           </div>
         </header>
