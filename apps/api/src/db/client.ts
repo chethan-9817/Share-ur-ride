@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
 import * as schema from './schema';
@@ -39,7 +40,9 @@ export async function initDb(url: string): Promise<Handle> {
     const { PGlite } = await import('@electric-sql/pglite');
     const { drizzle } = await import('drizzle-orm/pglite');
     const dir = url.replace(/^pglite:\/\//, '');
-    const client = url.startsWith('memory://') ? new PGlite() : new PGlite(path.resolve(dir));
+    const inMemory = url.startsWith('memory://');
+    if (!inMemory) fs.mkdirSync(path.resolve(dir), { recursive: true });
+    const client = inMemory ? new PGlite() : new PGlite(path.resolve(dir));
     await client.waitReady;
     current = {
       db: drizzle(client, { schema }) as unknown as Db,
