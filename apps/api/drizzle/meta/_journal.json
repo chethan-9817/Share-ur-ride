@@ -15,6 +15,13 @@
       "when": 1794232045406,
       "tag": "0001_ride_declined_groups",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794241011990,
+      "tag": "0002_refresh_rotation_grace",
+      "breakpoints": true
     }
   ]
 }

@@ -104,6 +104,8 @@ export const refreshTokens = pgTable(
     userAgent: text('user_agent'),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    /** Set when the token was exchanged for a successor (vs. revoked by logout/theft). */
+    rotatedAt: timestamp('rotated_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex('refresh_hash_uq').on(t.tokenHash), index('refresh_user_idx').on(t.userId)],

@@ -17,6 +17,8 @@ import { sendMail, templates } from './mailer';
  */
 
 const MAX_CODES_PER_HOUR = 5;
+/** Window in which a just-rotated refresh token is still accepted (multi-tab, retries). */
+const ROTATION_GRACE_MS = 30_000;
 
 export async function requestOtp(email: string) {
   const [{ recent } = { recent: 0 }] = await db
@@ -91,14 +93,25 @@ export async function rotateRefreshToken(token: string, userAgent?: string) {
   const [row] = await db.select().from(refreshTokens).where(eq(refreshTokens.tokenHash, sha256(token)));
   if (!row) throw unauthorized('Session not found');
   if (row.revokedAt) {
-    // A rotated token came back → assume theft and kill every session for this user.
-    await db.update(refreshTokens).set({ revokedAt: new Date() }).where(eq(refreshTokens.userId, row.userId));
-    throw unauthorized('Session was revoked — please sign in again');
+    // Two tabs (or a flaky network retry) can present the same token within moments of
+    // each other. Allow that briefly; anything later is treated as a stolen token.
+    const justRotated =
+      row.rotatedAt != null &&
+      row.revokedAt.getTime() === row.rotatedAt.getTime() &&
+      Date.now() - row.rotatedAt.getTime() < ROTATION_GRACE_MS;
+    if (!justRotated) {
+      // A rotated token came back → assume theft and kill every session for this user.
+      await db.update(refreshTokens).set({ revokedAt: new Date() }).where(eq(refreshTokens.userId, row.userId));
+      throw unauthorized('Session was revoked — please sign in again');
+    }
   }
   if (row.expiresAt < new Date()) throw unauthorized('Session expired');
   const [user] = await db.select().from(users).where(eq(users.id, row.userId));
   if (!user || user.suspended) throw unauthorized('Account unavailable');
-  await db.update(refreshTokens).set({ revokedAt: new Date() }).where(eq(refreshTokens.id, row.id));
+  if (!row.revokedAt) {
+    const now = new Date();
+    await db.update(refreshTokens).set({ revokedAt: now, rotatedAt: now }).where(eq(refreshTokens.id, row.id));
+  }
   const next = await createRefreshToken(user.id, userAgent);
   return { user, refreshToken: next };
 }
