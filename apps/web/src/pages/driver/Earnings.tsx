@@ -1,7 +1,7 @@
 import { formatINR } from '@arriveshare/shared';
 import { Gift, Users, Wallet } from 'lucide-react';
 import { useState } from 'react';
-import { Card, EmptyState, PageLoader, SectionTitle, Stat } from '@/components/ui/primitives';
+import { Card, EmptyState, PageHeader, PageLoader, SectionTitle, Stat } from '@/components/ui/primitives';
 import { useEarnings } from '@/hooks/queries';
 import { fmtDate, fmtDateTime } from '@/lib/utils';
 
@@ -49,7 +49,7 @@ export default function Earnings() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-extrabold">Earnings</h1>
+      <PageHeader icon={<Wallet className="h-6 w-6" />} title="Earnings" subtitle="Net of commission, including full-cab bonuses." />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Today" value={formatINR(s.today.net)} hint={`${s.today.trips} trips`} icon={<Wallet className="h-4 w-4 text-emerald-600" />} />
         <Stat label="7 days" value={formatINR(s.week.net)} hint={`${s.week.trips} trips`} />

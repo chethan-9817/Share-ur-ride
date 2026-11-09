@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { LiveMap } from '@/components/map/LiveMap';
 import { carIcon, destIcon } from '@/components/map/markers';
 import { Button } from '@/components/ui/Button';
-import { Badge, Card, EmptyState, SectionTitle, Stat } from '@/components/ui/primitives';
+import { Badge, Card, EmptyState, PageHeader, SectionTitle, Stat } from '@/components/ui/primitives';
 import { qk, useAdminOverview } from '@/hooks/queries';
 import { useSocketEvent } from '@/hooks/useSocket';
 import { api, errorMessage } from '@/lib/api';
@@ -95,10 +95,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold">Safety & operations</h1>
-        <p className="text-sm text-slate-500">Live view of the fleet, open incidents and today’s pooling.</p>
-      </div>
+      <PageHeader icon={<ShieldAlert className="h-6 w-6" />} title="Safety & operations" subtitle="Live view of the fleet, open incidents and today’s pooling." />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Stat label="Open SOS" value={<span className={o?.openSos ? 'text-red-600' : ''}>{o?.openSos ?? '—'}</span>} icon={<ShieldAlert className="h-4 w-4 text-red-600" />} />

@@ -3,7 +3,7 @@ import { History } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
-import { Badge, Card, EmptyState, PageLoader } from '@/components/ui/primitives';
+import { Badge, Card, EmptyState, PageHeader, PageLoader } from '@/components/ui/primitives';
 import { RideStatusBadge } from '@/components/ui/StatusBadge';
 import { Segmented } from '@/components/ui/Toggle';
 import { useRides } from '@/hooks/queries';
@@ -15,7 +15,7 @@ export default function Rides() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-extrabold">Your rides</h1>
+      <PageHeader icon={<History className="h-6 w-6" />} title="Your rides" subtitle="Every shared trip, fare and saving in one place." />
       <div className="max-w-xs">
         <Segmented value={scope} onChange={setScope} options={[{ value: 'active', label: 'Active' }, { value: 'history', label: 'Past' }]} />
       </div>

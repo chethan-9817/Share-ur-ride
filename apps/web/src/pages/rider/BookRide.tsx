@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { MapPicker } from '@/components/map/MapPicker';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/primitives';
+import { Card, PageHeader } from '@/components/ui/primitives';
 import { Segmented, Stepper, Toggle } from '@/components/ui/Toggle';
 import { useStations } from '@/hooks/queries';
 import { api, errorMessage } from '@/lib/api';
@@ -117,7 +117,7 @@ export default function BookRide() {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
       <div className="space-y-5">
-        <h1 className="text-2xl font-extrabold">Book a shared ride</h1>
+        <PageHeader icon={<MapPin className="h-6 w-6" />} title="Book a shared ride" subtitle="Pick your hub, drop a pin for home and we’ll find co-riders on your route." />
 
         <div>
           <span className="label">Arriving at</span>

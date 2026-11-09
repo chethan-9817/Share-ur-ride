@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { FakeCall } from '@/components/safety/FakeCall';
 import { SosButton } from '@/components/safety/SosButton';
 import { Button } from '@/components/ui/Button';
-import { Badge, Card, SectionTitle } from '@/components/ui/primitives';
+import { Badge, Card, PageHeader, SectionTitle } from '@/components/ui/primitives';
 import { Sheet } from '@/components/ui/Sheet';
 import { Toggle } from '@/components/ui/Toggle';
 import { qk, useContacts, useMySos } from '@/hooks/queries';
@@ -58,15 +58,7 @@ export default function SafetyCenter() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-safe-100 text-safe-600 dark:bg-safe-500/15">
-          <ShieldCheck className="h-6 w-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-extrabold">Safety centre</h1>
-          <p className="text-sm text-slate-500">Your safety tools, contacts and preferences.</p>
-        </div>
-      </div>
+      <PageHeader icon={<ShieldCheck className="h-6 w-6" />} title="Safety centre" subtitle="Your SOS, trusted contacts, preferences and helplines." />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-6">
