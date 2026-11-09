@@ -1,5 +1,5 @@
 import { checkInSchema, raiseSosSchema } from '@arriveshare/shared';
-import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
+import type { FastifyPluginAsyncZod, ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import { listSos, raiseSos, respondCheckIn, shareView } from '../services/safety';
 
@@ -14,7 +14,8 @@ const safetyRoutes: FastifyPluginAsyncZod = async (app) => {
     async (req) => shareView(req.params.token),
   );
 
-  app.register(async (authed) => {
+  app.register(async (plain) => {
+    const authed = plain.withTypeProvider<ZodTypeProvider>();
     authed.addHook('preHandler', app.authenticate);
 
     authed.post(

@@ -10,13 +10,13 @@ import { escalateMissedCheckIns, nightCheckIns } from './safety';
  */
 
 export async function tick(now = new Date()) {
-  const expired = await expireAcceptWindows(now);
+  const acceptExpired = await expireAcceptWindows(now);
   const matched = await runMatching(now);
   const dispatch = await sweepDispatch(now);
   const escalated = await escalateMissedCheckIns(now);
   const night = await nightCheckIns(now);
   const stale = await expireStaleRequests(now);
-  return { expired, ...matched, ...dispatch, escalated, night, stale };
+  return { acceptExpired, ...matched, ...dispatch, escalated, night, stale };
 }
 
 let timer: NodeJS.Timeout | null = null;

@@ -1,5 +1,5 @@
 import { driverOnboardSchema, locationPingSchema, verifyPinSchema, type DriverProfileDto } from '@arriveshare/shared';
-import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
+import type { FastifyPluginAsyncZod, ZodTypeProvider } from 'fastify-type-provider-zod';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { env } from '../config/env';
@@ -61,7 +61,8 @@ const driverRoutes: FastifyPluginAsyncZod = async (app) => {
     return { profile: profileDto(d!, u!), accessToken: app.jwt.sign({ sub: u!.id, role: 'driver' }) };
   });
 
-  app.register(async (scoped) => {
+  app.register(async (plain) => {
+    const scoped = plain.withTypeProvider<ZodTypeProvider>();
     scoped.addHook('preHandler', app.requireRole('driver'));
 
     scoped.get('/me', { schema: { tags: ['driver'] } }, async (req) => {
