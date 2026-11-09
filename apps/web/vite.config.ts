@@ -44,6 +44,11 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: { cacheName: 'map-tiles', expiration: { maxEntries: 400, maxAgeSeconds: 7 * 24 * 3600 } },
           },
+          {
+            urlPattern: /^https:\/\/server\.arcgisonline\.com\/ArcGIS\/rest\/services\/.*/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'satellite-tiles', expiration: { maxEntries: 600, maxAgeSeconds: 7 * 24 * 3600 } },
+          },
         ],
       },
     }),
