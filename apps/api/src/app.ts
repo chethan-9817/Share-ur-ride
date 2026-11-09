@@ -61,7 +61,8 @@ export async function buildApp() {
       : false,
   });
   await app.register(cors, { origin: origins, credentials: true });
-  await app.register(rateLimit, { global: true, max: 300, timeWindow: '1 minute' });
+  // Integration tests fire many requests from one IP; limits are exercised in production config.
+  if (!isTest) await app.register(rateLimit, { global: true, max: 300, timeWindow: '1 minute' });
   await app.register(authPlugin);
 
   await app.register(swagger, {
