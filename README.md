@@ -46,7 +46,7 @@ corridor**, splits the fare fairly, and wraps the whole trip in real-time safety
 - Matching radar → match screen with co-riders (first names only), fare breakdown and an acceptance countdown.
 - "Don't wait — ride solo" fallback at any time.
 - Driver card with a big number-plate graphic and your 4-digit pickup PIN.
-- Live map with the cab moving in real time, numbered drop stops and route.
+- Live **satellite map** (hybrid with roads and labels, or streets) with the cab gliding in real time, numbered drop stops and the route.
 - Trip summary with savings, two-way ratings with safety tags.
 
 ### Women safety
@@ -81,6 +81,7 @@ corridor**, splits the fare fairly, and wraps the whole trip in real-time safety
 | Realtime | **Socket.IO** rooms (user / group / share / admins) with membership checks |
 | Routing | OSRM (LRU cache, timeout, circuit breaker) with haversine fallback; Nominatim place search |
 | Web | **React 18**, Vite, Tailwind CSS, TanStack Query, Zustand, React Router, Leaflet, Sonner, PWA |
+| Maps | Satellite + labels (Esri World Imagery, Google-style hybrid) by default, switchable to satellite-only or CARTO streets; OSRM road routes |
 | Shared | `@arriveshare/shared` — fare engine, exact drop-order solver, pooling, safety detectors, schemas, DTOs |
 | Quality | Vitest (67 unit + integration tests), ESLint, GitHub Actions CI, Docker |
 
