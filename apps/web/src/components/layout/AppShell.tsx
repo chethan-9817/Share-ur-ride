@@ -72,7 +72,7 @@ export function AppShell() {
   return (
     <div className="min-h-screen lg:flex">
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white px-4 py-6 dark:border-white/5 dark:bg-ink-900 lg:flex">
+      <aside className="glass sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r px-4 py-6 lg:flex">
         <Link to="/" className="mb-8 flex items-center gap-2 px-2 text-lg font-extrabold">
           <img src="/icon.svg" className="h-8 w-8" alt="" /> ArriveShare
         </Link>
@@ -85,7 +85,7 @@ export function AppShell() {
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition',
-                  isActive ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/5',
+                  isActive ? 'bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-md shadow-brand-600/25' : 'text-slate-600 hover:bg-white/80',
                 )
               }
             >
@@ -94,7 +94,7 @@ export function AppShell() {
             </NavLink>
           ))}
         </nav>
-        <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3 dark:bg-white/5">
+        <div className="flex items-center gap-3 rounded-2xl bg-white/80 p-3 ring-1 ring-indigo-100">
           <Avatar name={user.name} size={36} />
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold">{user.name}</div>
@@ -107,7 +107,7 @@ export function AppShell() {
       </aside>
 
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <header className="pt-safe sticky top-0 z-[600] border-b border-slate-200/70 bg-white/80 backdrop-blur-lg dark:border-white/5 dark:bg-ink-950/80">
+        <header className="glass pt-safe sticky top-0 z-[600] border-b">
           <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 lg:px-8">
             <Link to="/" className="flex items-center gap-2 font-extrabold lg:hidden">
               <img src="/icon.svg" className="h-7 w-7" alt="" /> ArriveShare
@@ -127,7 +127,7 @@ export function AppShell() {
         </main>
 
         {/* Mobile bottom tabs */}
-        <nav className="pb-safe fixed inset-x-0 bottom-0 z-[600] border-t border-slate-200 bg-white/95 backdrop-blur-lg dark:border-white/5 dark:bg-ink-900/95 lg:hidden">
+        <nav className="glass pb-safe fixed inset-x-0 bottom-0 z-[600] border-t shadow-[0_-8px_24px_-16px_rgba(79,70,229,0.35)] lg:hidden">
           <div className="mx-auto grid max-w-lg" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
             {items.map((i) => (
               <NavLink
