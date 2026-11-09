@@ -1,6 +1,7 @@
 import { formatINR, type SafetyEventDto, type SosDto } from '@arriveshare/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Activity, AlertTriangle, Car, Leaf, MapPin, Phone, ShieldAlert, Users } from 'lucide-react';
+import { useMemo } from 'react';
 import { Marker, Polyline, Tooltip } from 'react-leaflet';
 import { toast } from 'sonner';
 import { LiveMap } from '@/components/map/LiveMap';
@@ -90,6 +91,7 @@ export default function AdminDashboard() {
   });
 
   const center = { lat: 13.05, lng: 77.62 };
+  const fleet = useMemo(() => (live.data?.drivers ?? []).map((d) => ({ lat: d.lat, lng: d.lng })), [live.data?.drivers]);
 
   return (
     <div className="space-y-6">
@@ -109,7 +111,7 @@ export default function AdminDashboard() {
 
       <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
         <Card className="p-3">
-          <LiveMap hub={center} className="h-[50vh] sm:h-[520px]" hubLabel="Bengaluru">
+          <LiveMap center={center} extraFit={fleet} className="h-[50vh] sm:h-[520px]">
             {live.data?.groups.map((g) => (
               <Polyline key={g.id} positions={g.route} pathOptions={{ color: g.womenOnly ? '#db2777' : '#4f46e5', weight: 3, opacity: 0.7 }} />
             ))}
