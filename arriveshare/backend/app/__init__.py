@@ -1,1 +1,0 @@
-"""ArriveShare Backend Application Package."""
