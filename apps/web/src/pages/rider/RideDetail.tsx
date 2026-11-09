@@ -83,7 +83,7 @@ export default function RideDetail() {
       <div className="grid gap-4 lg:grid-cols-[1fr_400px]">
         <div className="space-y-4">
           {(tracking || showMatch || finished) && group && (
-            <div className="relative">
+            <div className="relative lg:sticky lg:top-20">
               <LiveMap
                 hub={ride.station}
                 hubType={ride.station.type}
@@ -92,7 +92,7 @@ export default function RideDetail() {
                 stops={stops}
                 driver={tracking ? driverPos : null}
                 follow={onTrip}
-                className="h-[46vh] sm:h-[420px]"
+                className="h-[48vh] sm:h-[460px] lg:h-[calc(100vh-11rem)]"
               />
               {tracking && (
                 <div className="absolute left-3 top-3 z-[500] rounded-full bg-white/95 px-3 py-1.5 text-xs font-bold shadow dark:bg-ink-900/95">
