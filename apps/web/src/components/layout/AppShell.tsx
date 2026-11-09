@@ -14,8 +14,9 @@ import {
   WifiOff,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { CheckInPrompt } from '@/components/safety/CheckInPrompt';
+import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/primitives';
 import { useLiveInvalidation } from '@/hooks/queries';
 import { useConnectionState } from '@/hooks/useSocket';
@@ -62,6 +63,10 @@ export function AppShell() {
   useLiveInvalidation();
 
   const items = NAV[user.role];
+  const loc = useLocation();
+  const title =
+    [...items].sort((a, b) => b.to.length - a.to.length).find((i) => (i.end ? loc.pathname === i.to : loc.pathname.startsWith(i.to)))?.label ??
+    (loc.pathname.startsWith('/rides/') ? 'Ride details' : '');
   const logout = async () => {
     await api.post('/auth/logout').catch(() => undefined);
     clear();
@@ -112,13 +117,24 @@ export function AppShell() {
             <Link to="/" className="flex items-center gap-2 font-extrabold lg:hidden">
               <img src="/icon.svg" className="h-7 w-7" alt="" /> ArriveShare
             </Link>
+            <div className="hidden text-sm font-semibold text-slate-500 lg:block">{title}</div>
             <div className="flex-1" />
             {!online && (
-              <span className="chip bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+              <span className="chip bg-amber-100 text-amber-800">
                 <WifiOff className="h-3.5 w-3.5" /> Reconnecting
               </span>
             )}
+            {user.role === 'rider' && loc.pathname !== '/book' && (
+              <Link to="/book" className="hidden sm:block">
+                <Button size="sm" icon={<Plus className="h-4 w-4" />} className="bg-gradient-to-r from-brand-600 to-safe-600 hover:opacity-95">
+                  Book a ride
+                </Button>
+              </Link>
+            )}
             <NotificationBell />
+            <Link to="/profile" aria-label="Profile" className="rounded-full ring-2 ring-white transition hover:ring-brand-200">
+              <Avatar name={user.name} size={34} />
+            </Link>
           </div>
         </header>
 
