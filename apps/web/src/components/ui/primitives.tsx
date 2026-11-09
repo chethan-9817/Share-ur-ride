@@ -61,14 +61,32 @@ export function Rating({ value, count }: { value: number | null; count?: number 
 
 export function Stat({ label, value, hint, icon }: { label: string; value: ReactNode; hint?: ReactNode; icon?: ReactNode }) {
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between text-xs font-medium uppercase tracking-wide text-slate-500">
-        {label}
-        {icon}
+    <Card className="p-4 transition hover:-translate-y-0.5 hover:shadow-lg">
+      <div className="flex items-start justify-between gap-2">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+        {icon && <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-50 to-safe-50 ring-1 ring-indigo-100">{icon}</div>}
       </div>
-      <div className="mt-1 text-2xl font-extrabold tracking-tight">{value}</div>
+      <div className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">{value}</div>
       {hint && <div className="mt-0.5 text-xs text-slate-500">{hint}</div>}
     </Card>
+  );
+}
+
+/** Consistent page header: tinted icon tile, title and subtitle, optional action. */
+export function PageHeader({ icon, title, subtitle, action }: { icon?: ReactNode; title: string; subtitle?: string; action?: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-4">
+      {icon && (
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-safe-500 text-white shadow-lg shadow-brand-600/25">
+          {icon}
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h1>
+        {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
+      </div>
+      {action}
+    </div>
   );
 }
 
