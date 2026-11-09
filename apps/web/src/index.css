@@ -19,12 +19,12 @@
   body {
     @apply text-slate-900 antialiased;
     /* Soft indigo → rose → sky wash: colourful but calm, keeps white cards crisp. */
-    background-color: #f5f7ff;
+    background-color: #eef1ff;
     background-image:
-      radial-gradient(60rem 40rem at -10% -10%, rgb(199 210 254 / 0.75), transparent 60%),
-      radial-gradient(50rem 36rem at 110% -5%, rgb(251 207 232 / 0.7), transparent 60%),
-      radial-gradient(56rem 40rem at 50% 115%, rgb(186 230 253 / 0.65), transparent 60%),
-      radial-gradient(40rem 30rem at 100% 70%, rgb(221 214 254 / 0.5), transparent 60%);
+      radial-gradient(48rem 34rem at 0% 0%, rgb(165 180 252 / 0.6), transparent 65%),
+      radial-gradient(44rem 32rem at 100% 0%, rgb(249 168 212 / 0.5), transparent 65%),
+      radial-gradient(54rem 38rem at 65% 100%, rgb(125 211 252 / 0.5), transparent 65%),
+      radial-gradient(38rem 30rem at 10% 90%, rgb(196 181 253 / 0.45), transparent 65%);
     background-attachment: fixed;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
