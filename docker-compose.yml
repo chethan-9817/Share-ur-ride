@@ -1,0 +1,42 @@
+# Production-like stack: PostgreSQL 16 + the ArriveShare app (API + web on one origin).
+#   JWT_SECRET=$(openssl rand -hex 32) docker compose up --build
+#   → http://localhost:4000
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: arriveshare
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-arriveshare}
+      POSTGRES_DB: arriveshare
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U arriveshare']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '4000:4000'
+    environment:
+      DATABASE_URL: postgres://arriveshare:${POSTGRES_PASSWORD:-arriveshare}@db:5432/arriveshare
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET to a long random string}
+      CORS_ORIGINS: ${PUBLIC_WEB_URL:-http://localhost:4000}
+      PUBLIC_WEB_URL: ${PUBLIC_WEB_URL:-http://localhost:4000}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      SIMULATOR_ENABLED: ${SIMULATOR_ENABLED:-true}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-ArriveShare <no-reply@arriveshare.app>}
+
+volumes:
+  pgdata:
