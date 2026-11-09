@@ -25,12 +25,33 @@ export default function RiderHome() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold sm:text-3xl">
-          {greet}, {user.name.split(' ')[0]} 👋
-        </h1>
-        <p className="text-sm text-slate-500">Where are you arriving today?</p>
-      </div>
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-indigo-500 to-safe-500 p-6 text-white shadow-xl shadow-brand-600/25 sm:p-8">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/15 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-sky-300/30 blur-3xl" />
+        <div className="relative grid items-center gap-6 md:grid-cols-[1fr_auto]">
+          <div>
+            <p className="text-sm font-semibold text-white/80">{greet}, {user.name.split(' ')[0]} 👋</p>
+            <h1 className="mt-1 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+              Landed? Let’s get you
+              <br className="hidden sm:block" /> home together.
+            </h1>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
+              {['Verified drivers', 'PIN pickup', 'Live trip sharing', 'Silent SOS'].map((t) => (
+                <span key={t} className="rounded-full bg-white/15 px-3 py-1 ring-1 ring-white/25 backdrop-blur">
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+          {!active && (
+            <Link to="/book">
+              <Button size="lg" className="w-full bg-white text-brand-700 shadow-lg hover:bg-white/90 md:w-auto" icon={<ArrowRight className="h-5 w-5" />}>
+                Book a shared ride
+              </Button>
+            </Link>
+          )}
+        </div>
+      </section>
 
       {contacts && contacts.length === 0 && (
         <Link to="/safety" className="flex items-center gap-3 rounded-2xl border border-safe-200 bg-safe-50 p-4 text-sm dark:border-safe-500/20 dark:bg-safe-500/10">
