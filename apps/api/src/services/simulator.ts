@@ -89,7 +89,7 @@ export async function spawnCoRiders(ride: RideRequest) {
     .where(and(eq(users.simulated, true), eq(users.role, 'rider'), notInArray(users.id, busy)))
     .orderBy(asc(users.createdAt));
   const pick = bots.filter((b) => !ride.womenOnly || b.gender === 'female');
-  const chosen = (wantFemale ? pick.sort((a) => (a.gender === 'female' ? -1 : 1)) : pick).slice(
+  const chosen = (wantFemale ? [...pick].sort((a, b) => Number(a.gender !== 'female') - Number(b.gender !== 'female')) : pick).slice(
     0,
     1 + Math.round(Math.random()),
   );
