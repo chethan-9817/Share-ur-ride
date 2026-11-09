@@ -17,7 +17,15 @@
     @apply min-h-full;
   }
   body {
-    @apply bg-slate-50 text-slate-900 antialiased dark:bg-ink-950 dark:text-slate-100;
+    @apply text-slate-900 antialiased;
+    /* Soft indigo → rose → sky wash: colourful but calm, keeps white cards crisp. */
+    background-color: #f5f7ff;
+    background-image:
+      radial-gradient(60rem 40rem at -10% -10%, rgb(199 210 254 / 0.75), transparent 60%),
+      radial-gradient(50rem 36rem at 110% -5%, rgb(251 207 232 / 0.7), transparent 60%),
+      radial-gradient(56rem 40rem at 50% 115%, rgb(186 230 253 / 0.65), transparent 60%),
+      radial-gradient(40rem 30rem at 100% 70%, rgb(221 214 254 / 0.5), transparent 60%);
+    background-attachment: fixed;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
   }
@@ -34,13 +42,17 @@
 
 @layer components {
   .card {
-    @apply rounded-2xl border border-slate-200/70 bg-white shadow-soft dark:border-white/5 dark:bg-ink-900;
+    @apply rounded-2xl border border-white/80 bg-white/90 shadow-soft ring-1 ring-indigo-100/60 backdrop-blur-sm;
   }
   .input {
-    @apply h-12 w-full rounded-xl border border-slate-300 bg-white px-4 text-base text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 dark:border-white/10 dark:bg-ink-800 dark:text-white;
+    @apply h-12 w-full rounded-xl border border-indigo-100 bg-white px-4 text-base text-slate-900 shadow-sm shadow-indigo-100/40 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30;
   }
   .label {
-    @apply mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300;
+    @apply mb-1.5 block text-sm font-semibold text-slate-700;
+  }
+  /* Frosted surfaces for the header, sidebar and bottom tabs. */
+  .glass {
+    @apply border-white/70 bg-white/75 backdrop-blur-xl;
   }
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
@@ -56,10 +68,17 @@
 /* Leaflet tweaks */
 .leaflet-container {
   @apply h-full w-full rounded-2xl font-sans;
-  background: #e5e7eb;
+  background: #eef2f7;
 }
-.dark .leaflet-container {
-  background: #111827;
+.leaflet-control-zoom {
+  @apply overflow-hidden rounded-xl border-0 shadow-soft !important;
+}
+.leaflet-control-zoom a {
+  @apply flex h-9 w-9 items-center justify-center text-slate-700 !important;
+  line-height: 36px !important;
+}
+.leaflet-tooltip {
+  @apply rounded-lg border-0 px-2 py-1 text-xs font-semibold shadow-md;
 }
 .leaflet-control-attribution {
   @apply text-[10px];
