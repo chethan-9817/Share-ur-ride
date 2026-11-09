@@ -43,7 +43,7 @@ export function Tiles() {
       <TileLayer key="imagery" attribution={ESRI_ATTR} url={`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`} maxZoom={20} maxNativeZoom={19} />
       {layer === 'hybrid' && (
         <>
-          <TileLayer key="roads" url={`${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`} maxZoom={20} maxNativeZoom={19} opacity={0.9} />
+          <TileLayer key="roads" url={`${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`} maxZoom={20} maxNativeZoom={19} opacity={0.6} />
           <TileLayer key="labels" url={`${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`} maxZoom={20} maxNativeZoom={19} />
         </>
       )}
