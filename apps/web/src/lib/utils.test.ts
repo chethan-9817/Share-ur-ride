@@ -8,6 +8,11 @@ describe('web utils', () => {
     expect(cn('a', off && 'b', null, undefined, 'c')).toBe('a c');
   });
 
+  it('lets a later Tailwind class override a conflicting earlier one', () => {
+    expect(cn('text-white bg-brand-600', 'text-brand-700')).toBe('bg-brand-600 text-brand-700');
+    expect(cn('px-4 h-11', 'h-14')).toBe('px-4 h-14');
+  });
+
   it('formats datetime-local values in local time', () => {
     const d = new Date(2026, 10, 9, 7, 5);
     expect(toLocalInput(d)).toBe('2026-11-09T07:05');

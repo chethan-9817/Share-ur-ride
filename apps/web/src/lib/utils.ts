@@ -1,6 +1,8 @@
 import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
-export const cn = (...inputs: ClassValue[]) => clsx(inputs);
+/** Joins class names; later Tailwind classes override conflicting earlier ones (e.g. text colour). */
+export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
 const timeFmt = new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit' });
 const dateFmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' });
