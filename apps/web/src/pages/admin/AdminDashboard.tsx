@@ -1,0 +1,168 @@
+import { formatINR, type SafetyEventDto, type SosDto } from '@arriveshare/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Activity, AlertTriangle, Car, Leaf, MapPin, Phone, ShieldAlert, Users } from 'lucide-react';
+import { Marker, Polyline, Tooltip } from 'react-leaflet';
+import { toast } from 'sonner';
+import { LiveMap } from '@/components/map/LiveMap';
+import { carIcon, destIcon } from '@/components/map/markers';
+import { Button } from '@/components/ui/Button';
+import { Badge, Card, EmptyState, SectionTitle, Stat } from '@/components/ui/primitives';
+import { qk, useAdminOverview } from '@/hooks/queries';
+import { useSocketEvent } from '@/hooks/useSocket';
+import { api, errorMessage } from '@/lib/api';
+import { timeAgo, vibrate } from '@/lib/utils';
+
+interface Live {
+  drivers: { id: string; name: string; status: string; lat: number; lng: number; heading: number | null; vehicleNumber: string }[];
+  groups: { id: string; status: string; route: { lat: number; lng: number }[]; womenOnly: boolean }[];
+}
+
+function SosItem({ s }: { s: SosDto }) {
+  const qc = useQueryClient();
+  const update = useMutation({
+    mutationFn: (status: 'acknowledged' | 'resolved' | 'false_alarm') => api.patch(`/admin/sos/${s.id}`, { status }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin'] }),
+    onError: (e) => toast.error(errorMessage(e)),
+  });
+  return (
+    <div className={`rounded-2xl border p-4 ${s.status === 'open' ? 'border-red-300 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10' : 'border-slate-200 dark:border-white/10'}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 font-bold">
+            <ShieldAlert className="h-4 w-4 text-red-600" /> {s.user.name}
+            {s.user.gender === 'female' && <Badge tone="pink">Woman rider</Badge>}
+          </div>
+          <div className="mt-0.5 text-xs text-slate-500">
+            {timeAgo(s.createdAt)} · {s.message ?? 'SOS triggered'}
+          </div>
+        </div>
+        <Badge tone={s.status === 'open' ? 'red' : 'amber'}>{s.status}</Badge>
+      </div>
+      <div className="mt-3 grid gap-1 text-sm">
+        {s.user.phone && (
+          <a href={`tel:${s.user.phone}`} className="flex items-center gap-2 font-semibold text-brand-600">
+            <Phone className="h-4 w-4" /> Call rider {s.user.phone}
+          </a>
+        )}
+        {s.driver && (
+          <div className="text-slate-600 dark:text-slate-300">
+            Driver {s.driver.name} · <span className="font-mono">{s.driver.vehicleNumber}</span>
+          </div>
+        )}
+        {s.location && (
+          <a className="flex items-center gap-2 text-slate-600 underline dark:text-slate-300" target="_blank" rel="noreferrer" href={`https://maps.google.com/?q=${s.location.lat},${s.location.lng}`}>
+            <MapPin className="h-4 w-4" /> {s.location.lat.toFixed(5)}, {s.location.lng.toFixed(5)}
+          </a>
+        )}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {s.status === 'open' && (
+          <Button size="sm" variant="danger" loading={update.isPending} onClick={() => update.mutate('acknowledged')}>
+            Acknowledge
+          </Button>
+        )}
+        <Button size="sm" variant="success" onClick={() => update.mutate('resolved')}>
+          Resolve
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => update.mutate('false_alarm')}>
+          False alarm
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export default function AdminDashboard() {
+  const qc = useQueryClient();
+  const { data: o } = useAdminOverview();
+  const sos = useQuery({ queryKey: qk.admin('sos'), queryFn: () => api.get<SosDto[]>('/admin/sos?open=true'), refetchInterval: 30_000 });
+  const events = useQuery({ queryKey: qk.admin('events'), queryFn: () => api.get<SafetyEventDto[]>('/admin/safety-events'), refetchInterval: 30_000 });
+  const live = useQuery({ queryKey: qk.admin('live'), queryFn: () => api.get<Live>('/admin/live'), refetchInterval: 5_000 });
+
+  useSocketEvent<SosDto>('sos:raised', (s) => {
+    vibrate([500, 200, 500]);
+    toast.error(`🚨 SOS from ${s.user.name}`, { duration: 15_000 });
+    qc.invalidateQueries({ queryKey: ['admin'] });
+  });
+  useSocketEvent<{ message: string }>('safety:alert', (a) => {
+    toast.warning(a.message);
+    qc.invalidateQueries({ queryKey: qk.admin('events') });
+  });
+
+  const center = { lat: 13.05, lng: 77.62 };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-extrabold">Safety & operations</h1>
+        <p className="text-sm text-slate-500">Live view of the fleet, open incidents and today’s pooling.</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <Stat label="Open SOS" value={<span className={o?.openSos ? 'text-red-600' : ''}>{o?.openSos ?? '—'}</span>} icon={<ShieldAlert className="h-4 w-4 text-red-600" />} />
+        <Stat label="Active cabs" value={o?.activeGroups ?? '—'} icon={<Activity className="h-4 w-4 text-brand-600" />} />
+        <Stat label="Drivers online" value={o ? `${o.driversOnline}/${o.drivers}` : '—'} icon={<Car className="h-4 w-4" />} />
+        <Stat label="Rides today" value={o?.ridesToday ?? '—'} hint={o ? `${o.pooledRatePct}% pooled` : undefined} icon={<Users className="h-4 w-4" />} />
+        <Stat label="Rider savings" value={formatINR(o?.savingsToday ?? 0)} hint="today" />
+        <Stat label="CO₂ avoided" value={`${o?.co2SavedKg ?? 0} kg`} icon={<Leaf className="h-4 w-4 text-emerald-600" />} hint="today" />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
+        <Card className="p-3">
+          <LiveMap hub={center} className="h-[50vh] sm:h-[520px]" hubLabel="Bengaluru">
+            {live.data?.groups.map((g) => (
+              <Polyline key={g.id} positions={g.route} pathOptions={{ color: g.womenOnly ? '#db2777' : '#4f46e5', weight: 3, opacity: 0.7 }} />
+            ))}
+            {live.data?.drivers.map((d) => (
+              <Marker key={d.id} position={d} icon={carIcon(d.heading)} opacity={d.status === 'busy' ? 1 : 0.6}>
+                <Tooltip>
+                  {d.name} · {d.vehicleNumber} · {d.status}
+                </Tooltip>
+              </Marker>
+            ))}
+            {sos.data?.filter((s) => s.location).map((s) => (
+              <Marker key={s.id} position={s.location!} icon={destIcon}>
+                <Tooltip permanent direction="top" offset={[0, -32]}>SOS · {s.user.name.split(' ')[0]}</Tooltip>
+              </Marker>
+            ))}
+          </LiveMap>
+          <div className="flex flex-wrap gap-4 px-2 pt-3 text-xs text-slate-500">
+            <span className="flex items-center gap-1.5"><span className="h-0.5 w-5 bg-brand-600" /> Active trip</span>
+            <span className="flex items-center gap-1.5"><span className="h-0.5 w-5 bg-safe-600" /> Women-only trip</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-900 dark:bg-white" /> Driver</span>
+          </div>
+        </Card>
+
+        <div className="space-y-6">
+          <section>
+            <SectionTitle>Open incidents</SectionTitle>
+            {sos.data?.length ? (
+              <div className="space-y-3">{sos.data.map((s) => <SosItem key={s.id} s={s} />)}</div>
+            ) : (
+              <Card>
+                <EmptyState icon={<ShieldAlert />} title="No open SOS" body="New alerts appear here instantly with sound and vibration." />
+              </Card>
+            )}
+          </section>
+          <section>
+            <SectionTitle>Safety signals</SectionTitle>
+            <Card className="max-h-96 divide-y divide-slate-100 overflow-y-auto dark:divide-white/5">
+              {(events.data ?? []).length === 0 && <div className="p-4 text-sm text-slate-500">No route deviations or missed check-ins.</div>}
+              {events.data?.map((e) => (
+                <div key={e.id} className="flex items-start gap-3 p-3">
+                  <AlertTriangle className={`mt-0.5 h-4 w-4 shrink-0 ${e.severity === 'critical' ? 'text-red-600' : 'text-amber-500'}`} />
+                  <div className="text-sm">
+                    <div className="font-medium">{e.message}</div>
+                    <div className="text-xs text-slate-500">
+                      {e.type.replace(/_/g, ' ')} · {timeAgo(e.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </Card>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
