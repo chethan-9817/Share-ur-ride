@@ -55,7 +55,6 @@ const schema = z.object({
 
   DEMO_MODE: bool.default('false'),
   SIMULATOR_ENABLED: bool.default('false'),
-  REDIS_URL: z.string().optional().default(''),
 });
 
 export type Env = z.infer<typeof schema>;
