@@ -56,7 +56,7 @@ export default function Login() {
   });
 
   return (
-    <div className="pt-safe flex min-h-screen flex-col bg-gradient-to-br from-brand-50 via-white to-safe-50 dark:from-ink-950 dark:via-ink-950 dark:to-ink-900">
+    <div className="pt-safe flex min-h-screen flex-col ">
       <div className="mx-auto w-full max-w-md flex-1 px-4 py-6">
         <Link to="/" className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-400">
           <ArrowLeft className="h-4 w-4" /> Back

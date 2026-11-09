@@ -13,7 +13,7 @@ const features = [
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-white dark:bg-ink-950">
+    <div className="min-h-screen">
       <header className="pt-safe mx-auto flex max-w-6xl items-center justify-between px-4 py-4 lg:px-8">
         <div className="flex items-center gap-2 text-lg font-extrabold">
           <img src="/icon.svg" alt="" className="h-8 w-8" /> ArriveShare
@@ -95,7 +95,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="bg-slate-50 py-16 dark:bg-ink-900">
+      <section className="border-y border-white/70 bg-white/55 py-16 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 lg:px-8">
           <h2 className="text-center text-3xl font-extrabold tracking-tight">Safety isn’t a feature. It’s the foundation.</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-slate-600 dark:text-slate-400">
@@ -132,7 +132,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="border-t border-slate-200 py-8 text-center text-sm text-slate-500 dark:border-white/5">
+      <footer className="border-t border-white/70 bg-white/50 py-8 text-center text-sm text-slate-500">
         ArriveShare · Emergency? Call <a className="font-semibold text-red-600" href="tel:112">112</a> · Women helpline{' '}
         <a className="font-semibold text-safe-600" href="tel:1091">1091</a>
       </footer>
