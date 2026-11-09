@@ -30,9 +30,10 @@ export default function Landing() {
           <span className="chip bg-safe-100 text-safe-700 dark:bg-safe-500/15 dark:text-safe-400">
             <Sparkles className="h-3.5 w-3.5" /> Built safety-first for women travellers
           </span>
-          <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-            Landed? Share the cab home.{' '}
-            <span className="bg-gradient-to-r from-brand-600 to-safe-600 bg-clip-text text-transparent">Pay up to 60% less.</span>
+          <h1 className="mt-4 text-4xl font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
+            <span className="block">Landed? Share the cab home.</span>
+            {/* Own line + inline-block so the gradient clip never overlaps the line above. */}
+            <span className="mt-1 inline-block bg-gradient-to-r from-brand-600 to-safe-600 bg-clip-text pb-1 text-transparent">Pay up to 60% less.</span>
           </h1>
           <p className="mt-5 max-w-xl text-lg text-slate-600 dark:text-slate-400">
             ArriveShare pools travellers arriving at the same airport or railway station and heading the same way — with fair,
