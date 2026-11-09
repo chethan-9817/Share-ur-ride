@@ -1,0 +1,37 @@
+{
+  "name": "arriveshare",
+  "version": "2.0.0",
+  "private": true,
+  "description": "ArriveShare — safe, fair ride-pooling for airport & railway arrivals",
+  "author": "CHETHAN K S",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace @arriveshare/api & npm run dev --workspace @arriveshare/web",
+    "dev:api": "npm run dev --workspace @arriveshare/api",
+    "dev:web": "npm run dev --workspace @arriveshare/web",
+    "build": "npm run build --workspace @arriveshare/api && npm run build --workspace @arriveshare/web",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "db:generate": "npm run db:generate --workspace @arriveshare/api",
+    "db:seed": "npm run db:seed --workspace @arriveshare/api"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.2"
+  }
+}
