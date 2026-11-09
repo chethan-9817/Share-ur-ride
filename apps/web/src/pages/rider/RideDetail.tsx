@@ -101,6 +101,9 @@ export default function RideDetail() {
               )}
             </div>
           )}
+          {ride.status === 'pending' && (
+            <LiveMap hub={ride.station} hubType={ride.station.type} hubLabel={ride.station.name} destination={ride.destination} className="h-56 sm:h-72" />
+          )}
           {ride.status === 'pending' && <MatchingRadar ride={ride} />}
           {showMatch && group && <MatchOffer ride={ride} group={group} />}
           {ride.status === 'confirmed' && gs === 'dispatching' && (
