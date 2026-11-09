@@ -4,7 +4,8 @@ import { mmss } from '@/hooks/useCountdown';
 
 describe('web utils', () => {
   it('joins class names and drops falsy values', () => {
-    expect(cn('a', false && 'b', null, 'c')).toBe('a c');
+    const off = Math.random() > 2;
+    expect(cn('a', off && 'b', null, undefined, 'c')).toBe('a c');
   });
 
   it('formats datetime-local values in local time', () => {
