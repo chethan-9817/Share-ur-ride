@@ -24,6 +24,7 @@ const AdminDrivers = lazy(() => import('@/pages/admin/AdminDrivers'));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
 const ShareTrip = lazy(() => import('@/pages/ShareTrip'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
+const DemoSwitch = lazy(() => import('@/pages/DemoSwitch'));
 
 /** "/" is the landing page for guests and the signed-in app shell for everyone else. */
 function RootGate() {
@@ -58,6 +59,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<GuestOnly><Login /></GuestOnly>} />
         <Route path="/share/:token" element={<ShareTrip />} />
+        <Route path="/demo/:as" element={<DemoSwitch />} />
         <Route path="/onboarding" element={<RequireAuth><Onboarding /></RequireAuth>} />
 
         <Route path="/" element={<RootGate />}>
