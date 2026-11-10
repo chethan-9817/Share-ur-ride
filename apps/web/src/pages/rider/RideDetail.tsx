@@ -59,9 +59,10 @@ export default function RideDetail() {
 
   const gs = group?.status;
   const showMatch = ride.status === 'matched' || (ride.status === 'confirmed' && gs === 'accepting');
-  const tracking = gs === 'assigned' || gs === 'arrived' || gs === 'on_trip';
-  const onTrip = ride.status === 'picked_up';
   const finished = ['completed', 'cancelled', 'no_show', 'expired'].includes(ride.status);
+  // A cancelled/finished ride must not keep showing a live driver card or SOS.
+  const tracking = !finished && (gs === 'assigned' || gs === 'arrived' || gs === 'on_trip');
+  const onTrip = ride.status === 'picked_up';
 
   return (
     <div className="space-y-4">
