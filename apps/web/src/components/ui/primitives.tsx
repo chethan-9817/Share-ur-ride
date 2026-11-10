@@ -72,6 +72,65 @@ export function Stat({ label, value, hint, icon }: { label: string; value: React
   );
 }
 
+/**
+ * The one dashboard layout shared by the rider, driver and ops screens:
+ *   DashboardHero → StatGrid (4 cards) → two-column main area (MAIN_GRID) with a MapCard on the left.
+ */
+export const MAIN_GRID = 'grid gap-6 lg:grid-cols-[1fr_400px]';
+
+export function DashboardHero({
+  eyebrow,
+  title,
+  chips = [],
+  action,
+}: {
+  eyebrow?: ReactNode;
+  title: ReactNode;
+  chips?: ReactNode[];
+  action?: ReactNode;
+}) {
+  return (
+    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-indigo-500 to-safe-500 p-6 text-white shadow-xl shadow-brand-600/25 sm:p-8">
+      <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/15 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-sky-300/30 blur-3xl" />
+      <div className="relative grid items-center gap-6 md:grid-cols-[1fr_auto]">
+        <div>
+          {eyebrow && <p className="text-sm font-semibold text-white/80">{eyebrow}</p>}
+          <h1 className="mt-1 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">{title}</h1>
+          {chips.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
+              {chips.map((c, i) => (
+                <span key={i} className="rounded-full bg-white/15 px-3 py-1 ring-1 ring-white/25 backdrop-blur">
+                  {c}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        {action}
+      </div>
+    </section>
+  );
+}
+
+/** Always four cards across on laptops, two on phones. */
+export function StatGrid({ children }: { children: ReactNode }) {
+  return <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{children}</div>;
+}
+
+/** A map in a card, with an optional legend underneath. Same size everywhere. */
+export function MapCard({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
+  return (
+    <Card className="p-3">
+      {children}
+      {footer && <div className="flex flex-wrap gap-4 px-2 pt-3 text-xs text-slate-500">{footer}</div>}
+    </Card>
+  );
+}
+
+/** Same height for every dashboard map. */
+export const DASH_MAP = 'h-[46vh] sm:h-[480px]';
+
 /** Consistent page header: tinted icon tile, title and subtitle, optional action. */
 export function PageHeader({ icon, title, subtitle, action }: { icon?: ReactNode; title: string; subtitle?: string; action?: ReactNode }) {
   return (
