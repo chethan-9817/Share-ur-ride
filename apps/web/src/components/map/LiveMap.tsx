@@ -26,6 +26,10 @@ export const MAP_LIMITS = {
   maxZoom: 20,
   maxBounds: L.latLngBounds([8.0, 72.0], [19.5, 81.0]),
   maxBoundsViscosity: 0.9,
+  // Half-step zoom so long routes (Mangaluru ⇄ Bengaluru) fit snugly instead of cropping.
+  zoomSnap: 0.5,
+  // No cross-fade: it keeps the previous zoom's tiles on screen, stretched and pixelated.
+  fadeAnimation: false,
 };
 
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services';
@@ -122,8 +126,17 @@ export function fitTo(map: L.Map, points: LatLng[], maxZoom = 15) {
   if (points.length === 0) return;
   // fitBounds uses the container's size; make sure Leaflet has measured it first.
   map.invalidateSize({ pan: false });
-  if (points.length === 1) map.setView(points[0]!, Math.min(maxZoom, 14), { animate: true });
-  else map.fitBounds(L.latLngBounds(points.map((p) => [p.lat, p.lng])), { padding: [48, 48], maxZoom, animate: true });
+  if (points.length === 1) {
+    map.setView(points[0]!, Math.min(maxZoom, 14), { animate: false });
+    return;
+  }
+  const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng]));
+  // animate:false — an animated fit leaves stretched tiles from the old zoom on screen.
+  map.fitBounds(bounds, { padding: [48, 48], maxZoom, animate: false });
+  // Safety net: if the container size was stale, step out until every point is visible.
+  for (let i = 0; i < 6 && !map.getBounds().contains(bounds) && map.getZoom() > map.getMinZoom(); i++) {
+    map.setZoom(map.getZoom() - 0.5, { animate: false });
+  }
 }
 
 /** Fits once when the set of places changes — not on every GPS ping. */
