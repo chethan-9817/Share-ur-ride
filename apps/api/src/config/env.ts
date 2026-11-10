@@ -30,6 +30,8 @@ const schema = z.object({
 
   MAX_DETOUR_PCT: z.coerce.number().min(0).max(1).default(0.3),
   MAX_DETOUR_KM: z.coerce.number().positive().default(6),
+  /** Longest road trip we will pool or book — covers intercity runs such as Mangaluru ⇄ Bengaluru (~360 km). */
+  MAX_TRIP_KM: z.coerce.number().positive().default(450),
   CAB_CAPACITY: z.coerce.number().int().min(2).max(6).default(4),
   LUGGAGE_CAPACITY: z.coerce.number().int().min(1).max(8).default(4),
   MATCH_HORIZON_MIN: z.coerce.number().positive().default(180),

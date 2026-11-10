@@ -12,7 +12,7 @@ import {
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { fareParams } from '../config/env';
+import { env, fareParams } from '../config/env';
 import { db } from '../db/client';
 import { ratings, rideRequests, stations, users } from '../db/schema';
 import { numericCode } from '../lib/crypto';
@@ -75,7 +75,9 @@ const rideRoutes: FastifyPluginAsyncZod = async (app) => {
       const station = must(s, 'Station');
       const route = await routeThrough([{ lat: station.lat, lng: station.lng }, body.destination]);
       if (route.km < 2) throw badRequest('TOO_CLOSE', 'Destination is too close to the hub to pool');
-      if (route.km > 120) throw badRequest('TOO_FAR', 'Destination is outside the service area');
+      if (route.km > env.MAX_TRIP_KM) {
+        throw badRequest('TOO_FAR', `Destination is more than ${env.MAX_TRIP_KM} km from the hub — outside our service area`);
+      }
 
       const [ride] = await db
         .insert(rideRequests)
