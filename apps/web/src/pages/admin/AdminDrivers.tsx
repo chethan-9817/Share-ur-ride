@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BadgeCheck, Car } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
-import { Avatar, Badge, Card, EmptyState, PageLoader, Rating } from '@/components/ui/primitives';
+import { Avatar, Badge, Card, EmptyState, PageHeader, PageLoader, Rating } from '@/components/ui/primitives';
 import { qk } from '@/hooks/queries';
 import { api, errorMessage } from '@/lib/api';
 
@@ -35,8 +35,8 @@ export default function AdminDrivers() {
 
   if (isLoading) return <PageLoader />;
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-extrabold">Drivers</h1>
+    <div className="space-y-6">
+      <PageHeader icon={<Car className="h-6 w-6" />} title="Drivers" subtitle="Verify documents and see who is on the road." />
       {!data?.length ? (
         <EmptyState icon={<Car />} title="No drivers yet" />
       ) : (

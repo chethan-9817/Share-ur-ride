@@ -1,10 +1,10 @@
 import type { UserDto } from '@arriveshare/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Search } from 'lucide-react';
+import { Search, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
-import { Avatar, Badge, Card, Rating } from '@/components/ui/primitives';
+import { Avatar, Badge, Card, PageHeader, Rating } from '@/components/ui/primitives';
 import { api, errorMessage } from '@/lib/api';
 import { fmtDate } from '@/lib/utils';
 
@@ -29,8 +29,8 @@ export default function AdminUsers() {
   });
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-extrabold">Users</h1>
+    <div className="space-y-6">
+      <PageHeader icon={<Users className="h-6 w-6" />} title="Users" subtitle="Search riders and drivers, suspend accounts if needed." />
       <div className="relative max-w-md">
         <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
         <input className="input pl-12" placeholder="Search name or email" value={q} onChange={(e) => setQ(e.target.value)} />
