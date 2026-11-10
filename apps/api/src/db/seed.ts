@@ -6,13 +6,16 @@ import { db, closeDb, initDb, migrateDb } from './client';
 import { drivers, stations, trustedContacts, users } from './schema';
 import { DEMO_ACCOUNTS } from '../services/auth';
 
-/** Transit hubs served at launch (Bengaluru). */
+/** Transit hubs served at launch: Bengaluru, Mangaluru and Mysuru. */
 export const HUBS = [
   { code: 'BLR', name: 'Kempegowda International Airport', type: 'airport', lat: 13.1989, lng: 77.7068 },
   { code: 'SBC', name: 'KSR Bengaluru City Junction', type: 'railway', lat: 12.9784, lng: 77.57 },
   { code: 'YPR', name: 'Yesvantpur Junction', type: 'railway', lat: 13.0237, lng: 77.5503 },
   { code: 'SMVB', name: 'SMVT Bengaluru (Baiyappanahalli)', type: 'railway', lat: 12.9921, lng: 77.662 },
   { code: 'KBS', name: 'Kempegowda Bus Station (Majestic)', type: 'bus', lat: 12.9767, lng: 77.5713 },
+  { code: 'IXE', name: 'Mangaluru International Airport', type: 'airport', lat: 12.9613, lng: 74.8901, city: 'Mangaluru' },
+  { code: 'MAQ', name: 'Mangaluru Central Railway Station', type: 'railway', lat: 12.8727, lng: 74.8404, city: 'Mangaluru' },
+  { code: 'MYS', name: 'Mysuru Junction', type: 'railway', lat: 12.3166, lng: 76.6473, city: 'Mysuru' },
 ] as const;
 
 interface SeedUser {
@@ -49,6 +52,9 @@ const BOT_DRIVERS: { name: string; gender: Gender; hub: number; vehicle: [string
   { name: 'Manjunath S', gender: 'male', hub: 2, vehicle: ['KA04GH3390', 'Maruti Ertiga', 'Grey', 'suv'] },
   { name: 'Ramesh Babu', gender: 'male', hub: 3, vehicle: ['KA51JK6612', 'Honda Amaze', 'Red', 'sedan'] },
   { name: 'Shalini K', gender: 'female', hub: 4, vehicle: ['KA02LM9081', 'Tata Tigor EV', 'Teal', 'sedan'] },
+  { name: 'Savitha Shetty', gender: 'female', hub: 5, vehicle: ['KA19MA2468', 'Maruti Swift Dzire', 'Pearl White', 'sedan'] },
+  { name: 'Ganesh Poojary', gender: 'male', hub: 6, vehicle: ['KA19MB1357', 'Toyota Innova', 'Silver', 'suv'] },
+  { name: 'Prakash Gowda', gender: 'male', hub: 7, vehicle: ['KA55MC8642', 'Hyundai Xcent', 'Blue', 'sedan'] },
 ];
 
 const jitter = (v: number, d = 0.01) => v + (Math.random() - 0.5) * d;
@@ -75,7 +81,7 @@ export async function seed({ quiet = false } = {}) {
 
   await db
     .insert(stations)
-    .values(HUBS.map((h) => ({ ...h, city: 'Bengaluru' })))
+    .values(HUBS.map((h) => ({ ...h, city: 'city' in h ? h.city : 'Bengaluru' })))
     .onConflictDoNothing();
   const hubRows = await db.select().from(stations);
   const hubByCode = new Map(hubRows.map((h) => [h.code, h]));
