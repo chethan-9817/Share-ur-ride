@@ -60,7 +60,7 @@ export default function SafetyCenter() {
     <div className="space-y-6">
       <PageHeader icon={<ShieldCheck className="h-6 w-6" />} title="Safety centre" subtitle="Your SOS, trusted contacts, preferences and helplines." />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2">
         <div className="space-y-6">
           <Card className="space-y-3 p-5">
             <SosButton />

@@ -81,7 +81,7 @@ export default function RideDetail() {
         <RideStatusBadge status={ride.status} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_400px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="space-y-4">
           {(tracking || showMatch || finished) && group && (
             <div className="relative lg:sticky lg:top-20">

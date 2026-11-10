@@ -76,7 +76,7 @@ export function Stat({ label, value, hint, icon }: { label: string; value: React
  * The one dashboard layout shared by the rider, driver and ops screens:
  *   DashboardHero → StatGrid (4 cards) → two-column main area (MAIN_GRID) with a MapCard on the left.
  */
-export const MAIN_GRID = 'grid gap-6 lg:grid-cols-[1fr_400px]';
+export const MAIN_GRID = 'grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_400px]';
 
 export function DashboardHero({
   eyebrow,
