@@ -195,7 +195,9 @@ export function startDrive(groupId: string) {
 
       // Trip: follow the planned route polyline.
       const route = group.route.length >= 2 ? group.route : [hub, hub];
-      const t = Math.min(1, (Date.now() - started) / TRIP_MS);
+      // Longer (intercity) trips take proportionally longer to drive in the demo.
+      const tripMs = Math.min(240_000, Math.max(TRIP_MS, group.routeKm * 600));
+      const t = Math.min(1, (Date.now() - started) / tripMs);
       const p = interpolatePolyline(route, t);
       const ahead = interpolatePolyline(route, Math.min(1, t + 0.01));
       await ingestLocation(driverUserId, { lat: p.lat, lng: p.lng, heading: bearingDeg(p, ahead), speedKmh: 38 + Math.random() * 12 });
