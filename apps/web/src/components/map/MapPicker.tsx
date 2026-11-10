@@ -6,7 +6,7 @@ import { MapContainer, Marker, ZoomControl, useMap, useMapEvents } from 'react-l
 import { toast } from 'sonner';
 import { currentPosition } from '@/hooks/useGeolocation';
 import { cn } from '@/lib/utils';
-import { AutoResize, fitTo, LayerSwitcher, MapButton, Tiles } from './LiveMap';
+import { AutoResize, fitTo, LayerSwitcher, MAP_LIMITS, MapButton, Tiles } from './LiveMap';
 import { destIcon, hubIcon, meIcon } from './markers';
 
 function ClickToPick({ onPick }: { onPick: (p: LatLng) => void }) {
@@ -18,7 +18,8 @@ function ClickToPick({ onPick }: { onPick: (p: LatLng) => void }) {
 function Frame({ hub, value, focusKey }: { hub: LatLng; value: LatLng | null; focusKey: number }) {
   const map = useMap();
   useEffect(() => {
-    map.setView(hub, 11);
+    map.invalidateSize({ pan: false });
+    map.setView(hub, 12);
   }, [hub.lat, hub.lng]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (focusKey > 0 && value) fitTo(map, [hub, value], 14);
@@ -60,7 +61,7 @@ export function MapPicker({
 
   return (
     <div className={cn('relative isolate h-64 overflow-hidden rounded-2xl ring-1 ring-indigo-100 sm:h-80', className)}>
-      <MapContainer ref={setMap} center={hub} zoom={11} zoomControl={false} className="h-full w-full">
+      <MapContainer ref={setMap} center={hub} zoom={12} zoomControl={false} className="h-full w-full" {...MAP_LIMITS}>
         <Tiles />
         <ZoomControl position="bottomright" />
         <AutoResize />

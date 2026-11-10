@@ -16,6 +16,18 @@ export interface MapStop extends LatLng {
 
 const BENGALURU: LatLng = { lat: 12.9716, lng: 77.5946 };
 
+/**
+ * Keep every map on the service area. Without limits a bad fit (e.g. a container that
+ * had no size yet) zooms out until the whole of India is on screen.
+ * Zoom 7 is roughly the Bengaluru ⇄ Mangaluru span; the bounds cover Karnataka and neighbours.
+ */
+export const MAP_LIMITS = {
+  minZoom: 7,
+  maxZoom: 20,
+  maxBounds: L.latLngBounds([8.0, 72.0], [19.5, 81.0]),
+  maxBoundsViscosity: 0.9,
+};
+
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services';
 const ESRI_ATTR = 'Imagery &copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics';
 
@@ -40,7 +52,7 @@ export function Tiles() {
   }
   return (
     <>
-      <TileLayer key="imagery" attribution={ESRI_ATTR} url={`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`} maxZoom={20} maxNativeZoom={19} />
+      <TileLayer key="imagery" attribution={ESRI_ATTR} url={`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`} maxZoom={20} maxNativeZoom={18} />
       {layer === 'hybrid' && (
         <>
           <TileLayer key="roads" url={`${ESRI}/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}`} maxZoom={20} maxNativeZoom={19} opacity={0.6} />
@@ -108,6 +120,8 @@ export function AutoResize() {
 
 export function fitTo(map: L.Map, points: LatLng[], maxZoom = 15) {
   if (points.length === 0) return;
+  // fitBounds uses the container's size; make sure Leaflet has measured it first.
+  map.invalidateSize({ pan: false });
   if (points.length === 1) map.setView(points[0]!, Math.min(maxZoom, 14), { animate: true });
   else map.fitBounds(L.latLngBounds(points.map((p) => [p.lat, p.lng])), { padding: [48, 48], maxZoom, animate: true });
 }
@@ -117,6 +131,9 @@ function AutoFit({ points, fitKey }: { points: LatLng[]; fitKey: string }) {
   const map = useMap();
   useEffect(() => {
     fitTo(map, points);
+    // Fit again once layout has settled (lazy routes, phone rotation, sticky sidebars).
+    const t = setTimeout(() => fitTo(map, points), 350);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitKey, map]);
   return null;
@@ -254,11 +271,12 @@ export function LiveMap({
       <MapContainer
         ref={setMap}
         center={hub ?? center ?? destination ?? driver ?? BENGALURU}
-        zoom={11}
+        zoom={12}
         scrollWheelZoom
         zoomControl={false}
         attributionControl
         className="h-full w-full"
+        {...MAP_LIMITS}
       >
         <Tiles />
         <ZoomControl position="bottomright" />
