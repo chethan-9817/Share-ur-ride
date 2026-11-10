@@ -97,7 +97,7 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <PageHeader icon={<ShieldAlert className="h-6 w-6" />} title="Safety & operations" subtitle="Live view of the fleet, open incidents and today’s pooling." />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <Stat label="Open SOS" value={<span className={o?.openSos ? 'text-red-600' : ''}>{o?.openSos ?? '—'}</span>} icon={<ShieldAlert className="h-4 w-4 text-red-600" />} />
         <Stat label="Active cabs" value={o?.activeGroups ?? '—'} icon={<Activity className="h-4 w-4 text-brand-600" />} />
         <Stat label="Drivers online" value={o ? `${o.driversOnline}/${o.drivers}` : '—'} icon={<Car className="h-4 w-4" />} />
