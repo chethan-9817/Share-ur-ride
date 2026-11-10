@@ -115,7 +115,7 @@ export default function BookRide() {
   const valid = useMemo(() => !!stationId && !!dest && (label || query).length >= 2, [stationId, dest, label, query]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-5">
         <PageHeader icon={<MapPin className="h-6 w-6" />} title="Book a shared ride" subtitle="Pick your hub, drop a pin for home and we’ll find co-riders on your route." />
 
