@@ -68,33 +68,51 @@ export async function searchPlaces(q: string, near?: Near): Promise<Place[]> {
   if (hit && Date.now() - hit.at < TTL) return hit.places;
 
   try {
-    const params = new URLSearchParams({
-      q: query,
-      format: 'jsonv2',
-      addressdetails: '0',
-      limit: '8',
-      countrycodes: 'in',
+    const fetchRows = async (biased: boolean): Promise<Place[]> => {
+      const params = new URLSearchParams({ q: query, format: 'jsonv2', addressdetails: '0', limit: '8', countrycodes: 'in' });
+      if (biased && near) {
+        const d = 0.6; // ~65 km box around the hub — a preference, not a limit
+        params.set('viewbox', `${near.lng - d},${near.lat + d},${near.lng + d},${near.lat - d}`);
+      }
+      const res = await fetch(`${env.NOMINATIM_BASE_URL}/search?${params}`, {
+        signal: AbortSignal.timeout(4000),
+        headers: { 'User-Agent': 'ArriveShare/2.0 (ride-pooling demo)', 'Accept-Language': 'en' },
+      });
+      if (!res.ok) throw new Error(`nominatim ${res.status}`);
+      const rows = (await res.json()) as { display_name: string; name?: string; lat: string; lon: string }[];
+      return rows.map((r) => ({
+        label: r.display_name,
+        short: r.name || r.display_name.split(',')[0]!,
+        lat: Number(r.lat),
+        lng: Number(r.lon),
+      }));
+    };
+
+    // Two views of the same query: one nudged towards the hub, one nationwide. This lets
+    // "Indiranagar" resolve locally while "Mangalore" still finds Mangaluru from a Bengaluru hub.
+    const [local, nationwide] = await Promise.all([fetchRows(true), near ? fetchRows(false) : Promise.resolve([] as Place[])]);
+    const seen = new Set<string>();
+    const merged = [...local, ...nationwide].filter((p) => {
+      const key = `${p.lat.toFixed(2)},${p.lng.toFixed(2)}`;
+      return seen.has(key) ? false : (seen.add(key), true);
     });
-    if (near) {
-      const d = 0.6; // ~65 km box around the hub
-      // A soft preference: nearby places rank first, but far ones (Mangaluru from Bengaluru) still appear.
-      params.set('viewbox', `${near.lng - d},${near.lat + d},${near.lng + d},${near.lat - d}`);
-    }
-    const res = await fetch(`${env.NOMINATIM_BASE_URL}/search?${params}`, {
-      signal: AbortSignal.timeout(4000),
-      headers: { 'User-Agent': 'ArriveShare/2.0 (ride-pooling demo)', 'Accept-Language': 'en' },
-    });
-    if (!res.ok) throw new Error(`nominatim ${res.status}`);
-    const rows = (await res.json()) as { display_name: string; name?: string; lat: string; lon: string }[];
-    const places = rows.map((r) => ({
-      label: r.display_name,
-      short: r.name || r.display_name.split(',')[0]!,
-      lat: Number(r.lat),
-      lng: Number(r.lon),
-    }));
-    const merged = places.length ? places : localSearch(query, near);
-    cache.set(k, { at: Date.now(), places: merged });
-    return merged;
+    // Names that actually start like what was typed come first; otherwise keep local-first order.
+    const needle = query.toLowerCase();
+    const commonPrefix = (name: string) => {
+      const n = name.toLowerCase();
+      let i = 0;
+      while (i < n.length && i < needle.length && n[i] === needle[i]) i++;
+      return i;
+    };
+    const wanted = Math.min(4, needle.length);
+    const ranked = merged
+      .map((p, i) => ({ p, i, hit: commonPrefix(p.short) >= wanted ? 0 : 1 }))
+      .sort((a, b) => a.hit - b.hit || a.i - b.i)
+      .map((x) => x.p)
+      .slice(0, 8);
+    const places = ranked.length ? ranked : localSearch(query, near);
+    cache.set(k, { at: Date.now(), places });
+    return places;
   } catch {
     return localSearch(query, near);
   }
