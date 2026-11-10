@@ -1,12 +1,12 @@
 import { bearingDeg, formatINR, interpolatePolyline, type LatLng } from '@arriveshare/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Crosshair, Power, Route, ShieldCheck, Wallet } from 'lucide-react';
+import { Car, Crosshair, Power, Route, ShieldCheck, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { LiveMap, type MapStop } from '@/components/map/LiveMap';
 import { Button } from '@/components/ui/Button';
-import { Badge, Card, PageLoader, Rating, Stat } from '@/components/ui/primitives';
+import { Badge, Card, PageHeader, PageLoader, Stat } from '@/components/ui/primitives';
 import { Toggle } from '@/components/ui/Toggle';
 import { qk, useConfig, useDriverMe, useDriverTrip, useEarnings, useOffer } from '@/hooks/queries';
 import { useWatchPosition, type GeoFix } from '@/hooks/useGeolocation';
@@ -91,29 +91,28 @@ export default function DriverHome() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-extrabold">Driver dashboard</h1>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            {d.vehicle.color} {d.vehicle.model} · <span className="font-mono">{d.vehicle.number}</span> · <Rating value={d.ratingAvg} count={d.ratingCount} />
-          </div>
-        </div>
-        {!d.verified ? (
-          <Badge tone="amber">Verification pending</Badge>
-        ) : (
-          <button
-            onClick={() => toggle.mutate(!online)}
-            disabled={toggle.isPending || d.status === 'busy'}
-            className={cn(
-              'flex h-14 items-center gap-3 rounded-full px-6 text-base font-bold text-white shadow-lg transition active:scale-95 disabled:opacity-70',
-              online ? 'bg-emerald-600 shadow-emerald-600/30' : 'bg-slate-700 shadow-slate-700/30',
-            )}
-          >
-            <Power className="h-5 w-5" />
-            {d.status === 'busy' ? 'On a trip' : online ? 'Online' : 'Go online'}
-          </button>
-        )}
-      </div>
+      <PageHeader
+        icon={<Car className="h-6 w-6" />}
+        title="Driver dashboard"
+        subtitle={`${d.vehicle.color} ${d.vehicle.model} · ${d.vehicle.number}`}
+        action={
+          !d.verified ? (
+            <Badge tone="amber">Verification pending</Badge>
+          ) : (
+            <button
+              onClick={() => toggle.mutate(!online)}
+              disabled={toggle.isPending || d.status === 'busy'}
+              className={cn(
+                'flex h-12 items-center gap-2 rounded-full px-5 text-sm font-bold text-white shadow-lg transition active:scale-95 disabled:opacity-70',
+                online ? 'bg-emerald-600 shadow-emerald-600/30' : 'bg-slate-800 shadow-slate-800/30',
+              )}
+            >
+              <span className={cn('h-2.5 w-2.5 rounded-full', online ? 'animate-pulse bg-emerald-200' : 'bg-slate-400')} />
+              {d.status === 'busy' ? 'On a trip' : online ? 'Online' : 'Go online'}
+            </button>
+          )
+        }
+      />
 
       <div className="grid gap-5 lg:grid-cols-[1fr_420px]">
         <div className="space-y-4">
@@ -124,7 +123,7 @@ export default function DriverHome() {
             stops={stops}
             driver={pos}
             follow={!!trip}
-            className="h-[42vh] sm:h-[460px]"
+            className="h-[48vh] sm:h-[460px] lg:h-[calc(100vh-14rem)]"
           />
           {online && (
             <Card className="px-4 py-2">
@@ -140,7 +139,7 @@ export default function DriverHome() {
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 lg:sticky lg:top-20 lg:self-start">
           {trip ? (
             <TripPanel trip={trip} />
           ) : (
