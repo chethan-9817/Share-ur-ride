@@ -1,17 +1,18 @@
 import { formatINR, type SafetyEventDto, type SosDto } from '@arriveshare/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Activity, AlertTriangle, Car, Leaf, MapPin, Phone, ShieldAlert, Users } from 'lucide-react';
+import { Activity, AlertTriangle, Car, MapPin, Phone, ShieldAlert, Users } from 'lucide-react';
 import { useMemo } from 'react';
 import { Marker, Polyline, Tooltip } from 'react-leaflet';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { LiveMap } from '@/components/map/LiveMap';
 import { carIcon, destIcon } from '@/components/map/markers';
 import { Button } from '@/components/ui/Button';
-import { Badge, Card, EmptyState, PageHeader, SectionTitle, Stat } from '@/components/ui/primitives';
+import { Badge, Card, DASH_MAP, DashboardHero, EmptyState, MAIN_GRID, MapCard, SectionTitle, Stat, StatGrid } from '@/components/ui/primitives';
 import { qk, useAdminOverview } from '@/hooks/queries';
 import { useSocketEvent } from '@/hooks/useSocket';
 import { api, errorMessage } from '@/lib/api';
-import { timeAgo, vibrate } from '@/lib/utils';
+import { greeting, timeAgo, vibrate } from '@/lib/utils';
 
 interface Live {
   drivers: { id: string; name: string; status: string; lat: number; lng: number; heading: number | null; vehicleNumber: string }[];
@@ -95,20 +96,47 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader icon={<ShieldAlert className="h-6 w-6" />} title="Safety & operations" subtitle="Live view of the fleet, open incidents and today’s pooling." />
+      <DashboardHero
+        eyebrow={`${greeting()} · Safety desk`}
+        title={
+          <>
+            Every ride, <span className="sm:block">watched over.</span>
+          </>
+        }
+        chips={[
+          `${o?.pooledRatePct ?? 0}% pooled today`,
+          `${formatINR(o?.savingsToday ?? 0)} saved by riders`,
+          `${o?.co2SavedKg ?? 0} kg CO₂ avoided`,
+        ]}
+        action={
+          <Link to="/admin/drivers">
+            <Button size="lg" variant="light" className="w-full md:w-auto" icon={<Car className="h-5 w-5" />}>
+              Review drivers
+            </Button>
+          </Link>
+        }
+      />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        <Stat label="Open SOS" value={<span className={o?.openSos ? 'text-red-600' : ''}>{o?.openSos ?? '—'}</span>} icon={<ShieldAlert className="h-4 w-4 text-red-600" />} />
-        <Stat label="Active cabs" value={o?.activeGroups ?? '—'} icon={<Activity className="h-4 w-4 text-brand-600" />} />
-        <Stat label="Drivers online" value={o ? `${o.driversOnline}/${o.drivers}` : '—'} icon={<Car className="h-4 w-4" />} />
-        <Stat label="Rides today" value={o?.ridesToday ?? '—'} hint={o ? `${o.pooledRatePct}% pooled` : undefined} icon={<Users className="h-4 w-4" />} />
-        <Stat label="Rider savings" value={formatINR(o?.savingsToday ?? 0)} hint="today" />
-        <Stat label="CO₂ avoided" value={`${o?.co2SavedKg ?? 0} kg`} icon={<Leaf className="h-4 w-4 text-emerald-600" />} hint="today" />
-      </div>
+      <StatGrid>
+        <Stat label="Open SOS" value={<span className={o?.openSos ? 'text-red-600' : ''}>{o?.openSos ?? '—'}</span>} hint="needs attention" icon={<ShieldAlert className="h-4 w-4 text-red-600" />} />
+        <Stat label="Active cabs" value={o?.activeGroups ?? '—'} hint="on the road now" icon={<Activity className="h-4 w-4 text-brand-600" />} />
+        <Stat label="Drivers online" value={o ? `${o.driversOnline}/${o.drivers}` : '—'} hint="available or busy" icon={<Car className="h-4 w-4 text-brand-600" />} />
+        <Stat label="Rides today" value={o?.ridesToday ?? '—'} hint={o ? `${o.pooledRatePct}% pooled` : undefined} icon={<Users className="h-4 w-4 text-brand-600" />} />
+      </StatGrid>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
-        <Card className="p-3">
-          <LiveMap center={center} extraFit={fleet} className="h-[50vh] sm:h-[520px]">
+      <div className={MAIN_GRID}>
+        <section>
+          <SectionTitle>Live fleet</SectionTitle>
+          <MapCard
+            footer={
+              <>
+                <span className="flex items-center gap-1.5"><span className="h-0.5 w-5 bg-brand-600" /> Active trip</span>
+                <span className="flex items-center gap-1.5"><span className="h-0.5 w-5 bg-safe-600" /> Women-only trip</span>
+                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-900" /> Driver</span>
+              </>
+            }
+          >
+          <LiveMap center={center} extraFit={fleet} className={DASH_MAP}>
             {live.data?.groups.map((g) => (
               <Polyline key={g.id} positions={g.route} pathOptions={{ color: g.womenOnly ? '#db2777' : '#4f46e5', weight: 3, opacity: 0.7 }} />
             ))}
@@ -125,12 +153,8 @@ export default function AdminDashboard() {
               </Marker>
             ))}
           </LiveMap>
-          <div className="flex flex-wrap gap-4 px-2 pt-3 text-xs text-slate-500">
-            <span className="flex items-center gap-1.5"><span className="h-0.5 w-5 bg-brand-600" /> Active trip</span>
-            <span className="flex items-center gap-1.5"><span className="h-0.5 w-5 bg-safe-600" /> Women-only trip</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-900 dark:bg-white" /> Driver</span>
-          </div>
-        </Card>
+          </MapCard>
+        </section>
 
         <div className="space-y-6">
           <section>
